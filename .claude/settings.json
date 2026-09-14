@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python.exe -m pip install pulp)",
+      "Bash(.venv/Scripts/python.exe -m pytest -q tests/test_simulation.py)",
+      "Bash(.venv/Scripts/python.exe -m pytest -q tests/test_optimizer.py)",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "Bash(.venv/Scripts/python.exe -m pip install \"pulp[cbc]\")",
+      "Bash(.venv/Scripts/python.exe -m pip uninstall -y cbcbox)",
+      "Bash(.venv/Scripts/python.exe -m pytest -q tests/test_simulate.py)",
+      "Bash(.venv/Scripts/python.exe -m pytest -q tests/test_planner.py)",
+      "Bash(.venv/Scripts/python.exe -m py_compile streamlit_app.py)",
+      "Bash(.venv/Scripts/python.exe -m pytest -q)",
+      "Bash(.venv/Scripts/python.exe -m ruff check . --exclude \"OffShore Backup\" --exclude build --exclude .venv)",
+      "Bash(xargs ls -la)",
+      "Bash(sort -k5 -n -r)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(git check-ignore *)",
+      "Bash(git ls-tree *)",
+      "Bash(git rm *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(git add *)"
+    ]
+  }
+}

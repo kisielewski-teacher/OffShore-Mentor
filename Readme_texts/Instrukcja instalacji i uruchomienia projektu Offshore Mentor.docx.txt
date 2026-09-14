@@ -1,0 +1,190 @@
+Instrukcja instalacji i uruchomienia projektu Offshore Mentor
+
+1. Wymagania wstępne
+
+Python 3.10+ (zalecane 3.11)
+
+System: Windows / Linux / macOS
+
+Zainstalowany pip oraz opcjonalnie virtualenv
+
+Przeglądarka (do uruchomienia interfejsu Streamlit)
+
+
+
+2. Pobranie projektu
+
+Rozpakuj plik offshore.zip do wybranego katalogu, np.:
+
+C:\Programy\OffShore\
+
+Struktura projektu powinna wyglądać tak:
+
+OffShore/
+
+├── streamlit_app.py        # główny interfejs aplikacji
+
+├── modules/
+
+│   ├── visual.py           # wizualizacje map + animacja
+
+│   └── simulation.py       # logika generowania danych
+
+├── planner/
+
+│   └── plan.py             # heurystyka planowania napraw
+
+├── data/
+
+│   └── generate.py         # generator usterek, okien pogodowych, statków
+
+├── icons/
+
+│   ├── turbine.png         # ikona turbiny
+
+│   ├── port.png            # ikona portu
+
+│   └── vessel.png          # ikona statku
+
+└── README.md               # skrócona instrukcja
+
+
+
+3. Utworzenie wirtualnego środowiska (zalecane)
+
+W katalogu projektu:
+
+Shell
+
+python -m venv .venv
+
+Aktywacja:
+
+Windows: 
+
+Shell
+
+.venv\Scripts\activate
+
+Linux/macOS: 
+
+Shell
+
+source .venv/bin/activate
+
+
+
+4. Instalacja zależności
+
+W katalogu projektu:
+
+Shell
+
+pip install streamlit pandas altair pydeck pillow
+
+(Pillow jest potrzebne tylko do generowania placeholderów ikon – jeśli masz już ikony, możesz pominąć.)
+
+
+
+5. Uruchomienie aplikacji
+
+W katalogu projektu:
+
+Shell
+
+py streamlit run streamlit_app.py
+
+jak nie działa dodaj argument -m czyli :
+
+py -m streamlit run streamlit_app.py
+
+jak nie działa to możliwe że nie jest rozpoznany skrót py i wtedy trzeba napisać:
+
+python -m streamlit run streamlit_app.py
+
+
+
+Po chwili w przeglądarce otworzy się interfejs aplikacji (domyślnie: http://localhost:8501).
+
+
+
+6. Jak korzystać z aplikacji
+
+Ustaw parametry symulacji: 
+
+Liczba usterek
+
+Progi pogodowe (Hs, wiatr)
+
+Dzień pracy (8h / 24h)
+
+Kliknij Start symulacji → dane zostaną wygenerowane i zapisane w session_state.
+
+Zobacz: 
+
+KPI (liczba napraw, koszt)
+
+Mapa turbin i portu (z ikonami)
+
+Wybierz turbinę → zobacz trasę port → turbina.
+
+Sekcja Animacja ruchu statku: 
+
+Kliknij ▶ Start animacji → statek płynie tam i z powrotem, ikona obraca się zgodnie z kierunkiem, wybrana turbina pulsuje.
+
+⏹ Stop animacji zatrzymuje ruch.
+
+Na dole: 
+
+Wykres Gantta (harmonogram napraw)
+
+Tabela harmonogramu
+
+
+
+7. Dodatkowe funkcje superwersji
+
+Ikony: turbiny, port, statek (IconLayer z data URI)
+
+Animacja tam ↔ z powrotem + obrót ikony statku
+
+Pulsujące podświetlenie wybranej turbiny
+
+Mapa jasna (map_style="light") + kontrastowe kolory
+
+Fallback do kropek, jeśli ikony nie wczytają się
+
+
+
+8. Rozwiązywanie problemów
+
+Brak ikon → sprawdź, czy folder icons/ jest w katalogu projektu i zawiera pliki PNG.
+
+Mapa ciemna → upewnij się, że w kodzie jest map_style="light".
+
+Reset animacji restartuje stronę → w superwersji używamy session_state, więc dane nie powinny się kasować.
+
+Brak punktów na mapie → sprawdź, czy df_map nie jest pusty (dodaj st.write(df_map.head()) do debugowania).
+
+
+
+9. Następny krok (plan rozwoju)
+
+Dodać wybór statku do animacji:
+
+UI: selectbox z listą statków (np. CTV-Alpha, CTV-Beta)
+
+Animacja: prędkość i kolor ikony zależne od wybranego statku
+
+KPI: aktualizacja czasu tranzytu w zależności od prędkości statku
+
+
+
+
+
+
+
+Jakby co to pisać.
+
+Jakby były jakieś błędy pisać i przesyłać screeny.
+

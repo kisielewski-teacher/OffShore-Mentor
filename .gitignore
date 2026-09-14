@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# PyInstaller build artifacts
+build/
+dist/
+
+# Testing/tooling caches
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+
+# Runtime logs
+logs/
+
+# Generated assets (rebuilt automatically at runtime from assets/*.png)
+static/icons.png
+
+# Local-only manual backups (not project source)
+OffShore Backup/

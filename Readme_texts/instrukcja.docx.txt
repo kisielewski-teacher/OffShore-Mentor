@@ -1,0 +1,176 @@
+1. Wymagania
+
+Aby uruchomić aplikację, potrzebujesz:
+
+Python 3.10 lub nowszy
+
+Zainstalowane pakiety:
+
+streamlit
+
+pandas
+
+altair
+
+Możesz je zainstalować poleceniem:
+
+pip install streamlit pandas altair
+
+2. Struktura projektu
+
+Projekt powinien mieć następującą strukturę katalogów:
+
+offshore/ streamlit_app.py 
+
+data/ generate.py 
+
+planner/ plan.py 
+
+viz/ gantt.py
+
+Upewnij się, że foldery i pliki znajdują się dokładnie w tych miejscach.
+
+3. Uruchamianie aplikacji
+
+Otwórz PowerShell lub terminal.
+
+Przejdź do folderu projektu:
+
+cd C:\programy\offshore
+
+Uruchom aplikację Streamlit:
+
+py -m streamlit run streamlit_app.py
+
+Po chwili otworzy się przeglądarka z aplikacją.
+
+4. Interfejs aplikacji
+
+Po uruchomieniu zobaczysz panel z parametrami:
+
+Liczba usterek — ile usterek wygenerować
+
+Próg Hs — maksymalna wysokość fali
+
+Próg wiatru — maksymalna prędkość wiatru
+
+Dzień pracy = 8h — wpływa na koszt
+
+Przycisk „Start symulacji”
+
+Po kliknięciu „Start symulacji” aplikacja:
+
+Generuje usterki, okna pogodowe i statki
+
+Oblicza odległość turbiny od portu
+
+Oblicza czas tranzytu statku
+
+Sprawdza dostępność okien pogodowych
+
+Planuje naprawy
+
+Wyświetla wyniki
+
+5. Wyniki symulacji
+
+Aplikacja pokazuje:
+
+KPI
+
+liczba zaplanowanych napraw
+
+liczba niezaplanowanych
+
+całkowity koszt operacji
+
+Wykres Gantta
+
+pokazuje harmonogram napraw
+
+kolor = statek
+
+długość paska = tranzyt + naprawa + powrót
+
+Tabela harmonogramu
+
+Każdy wiersz zawiera:
+
+fault_id — ID usterki
+
+turbine_id — turbina
+
+start — godzina rozpoczęcia
+
+end — godzina zakończenia
+
+vessel_name — statek
+
+cost_pln — koszt operacji
+
+distance_km — odległość turbiny od portu
+
+transit_h — czas tranzytu w jedną stronę
+
+6. Jak działa algorytm?
+
+Sortuje usterki wg priorytetu i czasu zgłoszenia.
+
+Dla każdej usterki:
+
+oblicza odległość turbiny od portu
+
+oblicza czas tranzytu statku
+
+sprawdza okna pogodowe
+
+sprawdza dostępność statku
+
+Jeśli znajdzie pasujące okno → planuje naprawę.
+
+Jeśli nie → oznacza jako niezaplanowaną.
+
+7. Najczęstsze problemy i rozwiązania
+
+Błąd: ModuleNotFoundError: No module named 'data'
+
+Folder data nie istnieje lub jest w złym miejscu.
+Upewnij się, że masz:
+
+offshore/data/generate.py
+
+Błąd: streamlit not recognized
+
+Streamlit nie jest zainstalowany.
+Zainstaluj:
+
+pip install streamlit
+
+Błąd: UnboundLocalError: variable 'v'
+
+Masz starą wersję plan.py — wklej najnowszą wersję z instrukcji.
+
+8. Jak dodać własne dane?
+
+Możesz zmienić:
+
+liczbę usterek
+
+współrzędne turbin
+
+prędkości statków
+
+koszty operacji
+
+okna pogodowe
+
+Wszystko znajduje się w:
+
+data/generate.py
+
+9. Jak zakończyć pracę?
+
+W PowerShell naciśnij:
+
+CTRL + C
+

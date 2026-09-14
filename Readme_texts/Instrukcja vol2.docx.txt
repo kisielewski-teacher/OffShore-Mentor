@@ -1,0 +1,209 @@
+INSTRUKCJA OBSŁUGI APLIKACJI „Offshore Mentor” (dla laika)
+
+1. Co to jest „Offshore Mentor”?
+
+To prosta aplikacja, która symuluje pracę serwisu morskich farm wiatrowych.
+Pokazuje:
+
+gdzie znajdują się turbiny,
+
+jakie mają usterki,
+
+jakie są warunki pogodowe,
+
+jak statki serwisowe planują naprawy,
+
+ile to kosztuje,
+
+jak wygląda harmonogram prac.
+
+To narzędzie edukacyjne i demonstracyjne — idealne do prezentacji o energetyce morskiej.
+
+2. Co oznacza „offshore”?
+
+Offshore = „na morzu”.
+
+W energetyce oznacza to:
+
+morskie farmy wiatrowe,
+
+turbiny stojące kilka–kilkadziesiąt kilometrów od brzegu,
+
+statki serwisowe,
+
+specjalne okna pogodowe,
+
+logistykę i planowanie prac na morzu.
+
+3. Dlaczego to ważne dla Polski, Pomorza i UE?
+
+Polska
+
+Bałtyk ma jedne z najlepszych warunków wiatrowych w Europie.
+
+Do 2040 r. Polska planuje ponad 18 GW mocy z morskich farm wiatrowych.
+
+To oznacza tysiące miejsc pracy i miliardy złotych inwestycji.
+
+Pomorze
+
+Region stanie się centrum energetyki morskiej.
+
+Porty: Ustka, Łeba, Władysławowo, Gdynia — będą bazami serwisowymi.
+
+Twój projekt idealnie pokazuje, jak wygląda praca takich baz.
+
+Unia Europejska
+
+UE stawia na zieloną energię i neutralność klimatyczną.
+
+Offshore wind to jeden z filarów transformacji energetycznej.
+
+Symulacje takie jak ta pomagają szkolić kadry i planować inwestycje.
+
+4. Co jest zastosowane w projekcie? (prosto wyjaśnione)
+
+Python
+
+Język programowania — jak „język” dla komputera.
+
+Streamlit
+
+Narzędzie, które zamienia kod w interaktywną aplikację webową.
+
+pandas
+
+Biblioteka do pracy z tabelami danych.
+
+altair
+
+Biblioteka do rysowania wykresów (np. wykres Gantta).
+
+Moduły własne
+
+generate.py — generuje turbiny, pogodę i statki
+
+plan.py — planuje naprawy
+
+streamlit_app.py — główna aplikacja
+
+5. Jak zainstalować aplikację (dla laika)
+
+Krok 1: Zainstaluj Python
+
+Wejdź na:
+https://www.python.org/downloads/
+
+Kliknij Download Python → zainstaluj → zaznacz opcję
+Add Python to PATH.
+
+Krok 2: Pobierz projekt
+
+Skopiuj folder projektu na komputer (np. z pendrive’a lub GitHuba).
+
+Krok 3: Otwórz terminal
+
+Na Windows:
+
+wciśnij Start,
+
+wpisz cmd,
+
+naciśnij Enter.
+
+Krok 4: Wejdź do folderu projektu
+
+W terminalu wpisz:
+
+cd C:\programy\offshore 
+
+(jeśli projekt jest gdzie indziej — wpisz odpowiednią ścieżkę)
+
+Krok 5: Zainstaluj wymagane biblioteki
+
+Wpisz:
+
+pip install streamlit pandas altair 
+
+Krok 6: Uruchom aplikację
+
+Wpisz:
+
+streamlit run streamlit_app.py 
+
+Po chwili otworzy się przeglądarka z aplikacją.
+
+6. Jak obsługiwać aplikację (dla laika)
+
+1. Ustaw parametry
+
+liczba usterek,
+
+progi pogodowe,
+
+tryb pracy.
+
+2. Kliknij „Start symulacji”
+
+Aplikacja:
+
+wygeneruje turbiny,
+
+policzy naprawy,
+
+pokaże mapę,
+
+wyświetli koszty i harmonogram.
+
+3. Oglądaj wyniki
+
+Mapa — gdzie są turbiny i port
+
+KPI — ile napraw się udało
+
+Gantt — harmonogram prac
+
+Tabela — szczegóły każdej naprawy
+
+7. Jakie polecenia wpisywać w terminalu i co one oznaczają
+
+To wszystko — nie trzeba znać programowania.
+
+8. Jak zaprezentować projekt
+
+1. Uruchom aplikację
+
+streamlit run streamlit_app.py
+
+2. Powiedz kilka zdań:
+
+„To jest symulator pracy serwisu morskich farm wiatrowych.”
+
+„Pokazuje, jak planuje się naprawy turbin na morzu.”
+
+„Używamy danych pogodowych, statków i priorytetów usterek.”
+
+„To narzędzie edukacyjne i demonstracyjne.”
+
+3. Pokaż mapę
+
+turbiny,
+
+port Ustka,
+
+odległości.
+
+4. Pokaż harmonogram
+
+jak statki pracują,
+
+ile trwa naprawa,
+
+jakie są koszty.
+
+5. Podsumuj
+
+„Tak wygląda praca serwisu offshore.”
+
+„To ważne dla Pomorza i polskiej energetyki morskiej.”
+

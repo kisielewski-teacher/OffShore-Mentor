@@ -1,0 +1,70 @@
+Opis projektu: Offshore Mentor – Symulator serwisowania farm wiatrowych offshore
+
+Idea projektu
+
+Projekt Offshore Mentor to innowacyjna aplikacja edukacyjno-symulacyjna, która pozwala uczniom zrozumieć proces planowania serwisu morskich farm wiatrowych. Symulator pokazuje, jak warunki pogodowe, dostępność statków i koszty wpływają na harmonogram napraw turbin offshore. Uczniowie mogą sterować parametrami, analizować wyniki i obserwować animację ruchu statku na mapie Bałtyku.
+
+Cele projektu
+
+Edukacja praktyczna: Nauka planowania operacji offshore w warunkach rzeczywistych ograniczeń (pogoda, logistyka, koszty).
+
+Rozwój kompetencji cyfrowych: Praca z narzędziami Python, Streamlit, PyDeck, analiza danych i wizualizacja.
+
+Świadomość energetyczna: Zrozumienie roli morskiej energetyki wiatrowej w transformacji energetycznej Polski i UE.
+
+Przygotowanie do zawodów przyszłości: Offshore wind, logistyka morska, zarządzanie flotą, analiza danych.
+
+
+
+Powiązanie z celami UE
+
+Projekt wpisuje się w:
+
+Europejski Zielony Ład – wspiera transformację energetyczną i rozwój OZE.
+
+Cele klimatyczne UE 2030 – redukcja emisji CO₂ poprzez rozwój morskiej energetyki wiatrowej.
+
+Agenda cyfrowa UE – rozwój kompetencji cyfrowych i innowacji w edukacji.
+
+
+
+Powiązanie z celami Polski
+
+Polityka Energetyczna Polski do 2040 (PEP2040) – rozwój morskich farm wiatrowych na Bałtyku.
+
+Krajowy Plan Odbudowy – inwestycje w zieloną energię i cyfryzację edukacji.
+
+Strategia na rzecz Odpowiedzialnego Rozwoju – kształcenie w zawodach przyszłości.
+
+
+
+Powiązanie z celami Pomorza
+
+Regionalna Strategia Innowacji Pomorza – rozwój gospodarki morskiej i energetyki odnawialnej.
+
+Program MEWy – edukacja w zakresie morskiej energetyki wiatrowej.
+
+Rozwój portów i logistyki – Ustka, Słupsk jako zaplecze dla offshore wind.
+
+
+
+Powiązanie z celami Słupska i regionu
+
+Strategia Rozwoju Miasta Słupska – wspieranie innowacji, edukacji technicznej i zielonej energii.
+
+Rozwój kompetencji zawodowych młodzieży – przygotowanie do pracy w branżach offshore, energetyki i logistyki.
+
+Promocja regionu jako zaplecza dla morskiej energetyki wiatrowej – Słupsk i Ustka w roli kluczowych punktów dla serwisu farm wiatrowych.
+
+
+
+Dlaczego projekt jest wyjątkowy?
+
+Łączy technologię, energetykę i logistykę w praktycznym narzędziu edukacyjnym.
+
+Pokazuje realne wyzwania branży offshore: pogoda, koszty, dostępność zasobów.
+
+Umożliwia uczniom pracę z nowoczesnymi narzędziami IT i rozwój kompetencji przyszłości.
+
+Wspiera cele klimatyczne i cyfrowe na poziomie UE, kraju i regionu.
+

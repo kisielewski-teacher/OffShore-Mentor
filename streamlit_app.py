@@ -1,13 +1,115 @@
-# streamlit_app.py (light map style + high contrast + vessel animation)
 import math
 import time
 import pandas as pd
 import streamlit as st
 import altair as alt
 import pydeck as pdk
+import logging
+import os
+from logging.handlers import RotatingFileHandler
 
-from data.generate import gen_faults, gen_windows, gen_vessels
-from planner.plan import plan_repairs, haversine, transit_time_km
+from planner.plan import plan_repairs, haversine, transit_time_km, gen_faults, gen_windows, gen_vessels
+from planner.optimizer import solve_optimal_schedule, SOLVER_MAX_FAULTS
+from planner.simulate import run_rolling_simulation, snapshots_to_dataframe
+from modules import visual
+from viz.gantt import gantt_chart
+
+# --- logging setup --------------------------------------------------
+LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+log_file = os.path.join(LOG_DIR, "animation.log")
+logger = logging.getLogger("offshore_app")
+logger.setLevel(logging.DEBUG)
+if not logger.handlers:
+    fh = RotatingFileHandler(log_file, maxBytes=2_000_000, backupCount=3, encoding="utf-8")
+    fh.setLevel(logging.DEBUG)
+    fmt = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+    fh.setFormatter(fmt)
+    logger.addHandler(fh)
+    sh = logging.StreamHandler()
+    sh.setLevel(logging.INFO)
+    sh.setFormatter(fmt)
+    logger.addHandler(sh)
+logger.debug("Logger initialized, log_file=%s", log_file)
+try:
+    assets_icon = os.path.join(os.path.dirname(__file__), "assets", "icons.png")
+    assets_exists = os.path.exists(assets_icon)
+    assets_size = os.path.getsize(assets_icon) if assets_exists else None
+    logger.info("Asset icon path: %s exists=%s size=%s", assets_icon, assets_exists, assets_size)
+    logger.info("Expected public icon path served by Streamlit: %s", "/assets/icons.png")
+except Exception:
+    logger.exception("Failed to stat assets/icons.png")
+
+# --------------------------------------------------------------------
+
+# Optional autorefresh support (third-party). Graceful fallback if missing.
+try:
+    from streamlit_autorefresh import st_autorefresh  # type: ignore
+    _HAS_ST_AUTOREFRESH = True
+except Exception:
+    st_autorefresh = None
+    _HAS_ST_AUTOREFRESH = False
+
+
+def trigger_client_rerun(delay_ms: int = 1000) -> None:
+    js = f"""
+    <script>
+    setTimeout(function(){{
+        try {{
+            const p = new URLSearchParams(window.location.search);
+            p.set('_r', '{int(time.time()*1000)}');
+            const newUrl = window.location.pathname + '?' + p.toString();
+            try {{ if (window.top && window.top !== window) {{ window.top.location.href = newUrl; return; }} }} catch(e){{}}
+            try {{ if (window.parent && window.parent !== window) {{ window.parent.location.href = newUrl; return; }} }} catch(e){{}}
+            window.location.href = newUrl;
+        }} catch (e) {{ /* ignore */ }}
+    }},{delay_ms});
+    </script>
+    """
+    try:
+        st.components.v1.html(js, height=1)
+        st.session_state._client_rerun_injected = True
+        st.session_state._client_rerun_injected_ts = int(time.time() * 1000)
+        logger.info("Injected client rerun HTML (delay_ms=%s)", delay_ms)
+    except Exception:
+        logger.exception("Client rerun injection failed, falling back to do_rerun")
+        do_rerun()
+
+
+def do_rerun():
+    if hasattr(st, "experimental_rerun"):
+        try:
+            st.experimental_rerun()
+            return
+        except Exception:
+            pass
+
+    for mod in (
+        "streamlit.script_runner",
+        "streamlit.runtime.scriptrunner",
+        "streamlit.scriptrunner",
+    ):
+        try:
+            m = __import__(mod, fromlist=["RerunException"])  # type: ignore
+            RerunException = getattr(m, "RerunException", None)
+            if RerunException is not None:
+                raise RerunException()
+        except Exception:
+            pass
+
+    try:
+        try:
+            st.query_params = {"_rerun": int(time.time())}
+        except Exception:
+            params = dict(st.query_params) if hasattr(st, "query_params") else {}
+            params["_rerun"] = int(time.time())
+            try:
+                st.query_params = params
+            except Exception:
+                pass
+    except Exception:
+        return
+
 
 st.set_page_config(page_title="Offshore Mentor", layout="wide")
 st.title("Offshore Mentor – Symulator serwisowania farm wiatrowych offshore")
@@ -20,6 +122,8 @@ if "anim_running" not in st.session_state:
     st.session_state.anim_running = False
 if "anim_frame" not in st.session_state:
     st.session_state.anim_frame = 0
+if "sim_data" not in st.session_state:
+    st.session_state.sim_data = None
 
 # --- Panel parametrów ---
 col1, col2, col3 = st.columns(3)
@@ -36,277 +140,488 @@ with col3:
 
 st.markdown("---")
 
-# --- Symulacja ---
-if run_sim:
-    faults = gen_faults(n_faults)
-    windows = gen_windows()
-    vessels = gen_vessels()
+tab1, tab2 = st.tabs(["Symulacja jednorazowa", "Symulacja wielodniowa"])
 
-    schedule, tot_cost = plan_repairs(
-        faults,
-        windows,
-        vessels,
-        hs_thr=hs_thr,
-        wind_thr=wind_thr,
-        workday_hours=(8 if workday_8h else 24),
-    )
-    df = pd.DataFrame(schedule)
+with tab1:
+    # --- Symulacja ---
+    if run_sim:
+        faults = gen_faults(n_faults)
+        windows = gen_windows()
+        vessels = gen_vessels()
+        logger.info("Simulation started: n_faults=%s, hs_thr=%s, wind_thr=%s", n_faults, hs_thr, wind_thr)
 
-    # KPI
-    st.subheader("KPI – Kluczowe wskaźniki")
-    planned = int(df["start"].notna().sum())
-    unplanned = int(df["start"].isna().sum())
-    col_k1, col_k2, col_k3 = st.columns(3)
-    col_k1.metric("Zaplanowane naprawy", planned)
-    col_k2.metric("Niezaplanowane", unplanned)
-    col_k3.metric("Szac. koszt [PLN]", f"{tot_cost:,.0f}")
+        schedule, tot_cost = plan_repairs(
+            faults,
+            windows,
+            vessels,
+            hs_thr=hs_thr,
+            wind_thr=wind_thr,
+            workday_hours=(8 if workday_8h else 24),
+        )
+        df = pd.DataFrame(schedule)
+        st.session_state.sim_data = (faults, windows, vessels, df, tot_cost)
 
-    st.markdown("---")
+    # If simulation already stored in session state, use it so animation survives reruns
+    if st.session_state.sim_data is not None:
+        faults, windows, vessels, df, tot_cost = st.session_state.sim_data
+        logger.info("Loaded simulation from session_state: faults=%s, windows=%s, vessels=%s", len(faults), len(windows), len(vessels))
 
-    # Mapa turbin i portu
-    st.subheader("Mapa turbin i portu bazowego")
-    port_lat = 54.580
-    port_lon = 16.860
+        # KPI
+        st.subheader("KPI – Kluczowe wskaźniki")
+        planned = int(df["start"].notna().sum())
+        unplanned = int(df["start"].isna().sum())
+        col_k1, col_k2, col_k3 = st.columns(3)
+        col_k1.metric("Zaplanowane naprawy", planned)
+        col_k2.metric("Niezaplanowane", unplanned)
+        col_k3.metric("Szac. koszt [PLN]", f"{tot_cost:,.0f}")
 
-    df_map = pd.DataFrame(
-        [
-            {
-                "lat": f.lat,
-                "lon": f.lon,
-                "fault_id": f.fault_id,
-                "turbine_id": f.turbine_id,
-                "priority": f.priority,
-                "type": "turbina",
-            }
-            for f in faults
-        ]
-    )
-    df_port = pd.DataFrame(
-        [
-            {
-                "lat": port_lat,
-                "lon": port_lon,
-                "fault_id": "PORT",
-                "turbine_id": "Port Ustka",
-                "priority": 0,
-                "type": "port",
-            }
-        ]
-    )
+        st.markdown("---")
 
-    # Styl mapy i kolory (jasne tło)
-    map_style_value = "light"
-    turbine_color = [0, 200, 255] if hi_contrast else [0, 120, 255]
-    port_color = [255, 200, 0] if hi_contrast else [255, 160, 0]
-    line_width = 6 if hi_contrast else 4
-    turbine_radius = 120 if hi_contrast else 90
-    port_radius = 160 if hi_contrast else 130
+        # Mapa turbin i portu
+        st.subheader("Mapa turbin i portu bazowego")
+        port_lat = 54.580
+        port_lon = 16.860
 
-    # Warstwy pydeck
-    turbine_layer = pdk.Layer(
-        "ScatterplotLayer",
-        data=df_map,
-        get_position="[lon, lat]",
-        get_color=turbine_color,
-        get_radius=turbine_radius,
-        pickable=True,
-    )
-    port_layer = pdk.Layer(
-        "ScatterplotLayer",
-        data=df_port,
-        get_position="[lon, lat]",
-        get_color=port_color,
-        get_radius=port_radius,
-        pickable=True,
-    )
+        df_map = pd.DataFrame(
+            [
+                {
+                    "lat": f.lat,
+                    "lon": f.lon,
+                    "fault_id": f.fault_id,
+                    "turbine_id": f.turbine_id,
+                    "priority": f.priority,
+                    "type": "turbina",
+                }
+                for f in faults
+            ]
+        )
+        df_port = pd.DataFrame(
+            [
+                {
+                    "lat": port_lat,
+                    "lon": port_lon,
+                    "fault_id": "PORT",
+                    "turbine_id": "Port Ustka",
+                    "priority": 0,
+                    "type": "port",
+                }
+            ]
+        )
 
-    view_state = pdk.ViewState(
-        latitude=df_map["lat"].mean(),
-        longitude=df_map["lon"].mean(),
-        zoom=9.2,
-        pitch=0,
-    )
-    deck = pdk.Deck(
-        layers=[turbine_layer, port_layer],
-        initial_view_state=view_state,
-        tooltip={"text": "{turbine_id}"},
-        map_style=map_style_value,
-    )
-    st.pydeck_chart(deck)
+        # Wybór turbiny → zaznaczenie na mapie (highlight)
+        selected_fault = st.selectbox(
+            "Wybierz turbinę do trasy port → turbina:", df_map["fault_id"].tolist()
+        )
 
-    # Wybór turbiny → trasa port → turbina
-    selected_fault = st.selectbox(
-        "Wybierz turbinę do trasy port → turbina:", df_map["fault_id"].tolist()
-    )
-    info = df_map[df_map["fault_id"] == selected_fault].iloc[0]
+        try:
+            selected_df = df_map[df_map["fault_id"] == selected_fault]
+        except Exception:
+            selected_df = pd.DataFrame(columns=df_map.columns)
 
-    st.subheader("Trasa port → turbina")
-    ref_vessel_speed = vessels[0].speed_kn if vessels else 20.0
-    distance_km = haversine(port_lat, port_lon, info["lat"], info["lon"])
-    transit_h = transit_time_km(distance_km, ref_vessel_speed)
 
-    # Status pogodowy (czy jakiekolwiek okno spełnia progi i mieści operację 2*tranzyt + 8h)
-    duration_h = math.ceil(transit_h) * 2 + 8
+        # Styl mapy i kolory (jasne tło)
+        map_style_value = "light"
+        turbine_color = [0, 200, 255] if hi_contrast else [0, 120, 255]
+        port_color = [255, 200, 0] if hi_contrast else [255, 160, 0]
+        line_width = 6 if hi_contrast else 4
+        # Use pixel units for scatterplot radii so points remain visible at map zooms
+        turbine_radius = 8 if hi_contrast else 6
+        port_radius = 10 if hi_contrast else 8
 
-    def find_feasible_window(windows, hs_thr, wind_thr, reported_h, duration_h):
-        for w in sorted(windows, key=lambda w: w.start):
-            if (w.hs_m <= hs_thr) and (w.wind_ms <= wind_thr):
-                start = max(w.start, reported_h)
-                if start + duration_h <= w.end:
-                    return w
-        return None
+        # Coerce lat/lon to floats and log diagnostics to help visibility issues
+        try:
+            df_map["lat"] = df_map["lat"].astype(float)
+            df_map["lon"] = df_map["lon"].astype(float)
+            df_port["lat"] = df_port["lat"].astype(float)
+            df_port["lon"] = df_port["lon"].astype(float)
+            logger.info("df_map dtypes: %s", df_map.dtypes.to_dict())
+            logger.info(
+                "df_map lat range: %s - %s, lon range: %s - %s, count=%s",
+                df_map["lat"].min(),
+                df_map["lat"].max(),
+                df_map["lon"].min(),
+                df_map["lon"].max(),
+                len(df_map),
+            )
+        except Exception:
+            logger.exception("Failed to coerce df_map/df_port lat/lon to float")
 
-    w = find_feasible_window(
-        windows, hs_thr, wind_thr, reported_h=0, duration_h=duration_h
-    )
-
-    color = [0, 200, 0] if w is not None else [220, 0, 0]
-    status = (
-        "Warunki OK – operacja możliwa w najbliższym oknie"
-        if w is not None
-        else "Warunki przekroczone – brak okna dla operacji"
-    )
-
-    st.write(f"**Odległość:** {distance_km:.2f} km")
-    st.write(f"**Czas tranzytu (1 strona):** {transit_h:.2f} h")
-    st.write(f"**Status pogodowy:** {status}")
-
-    # --- ROUTE (static) ---
-    route_data = pd.DataFrame(
-        [
-            {"lat": port_lat, "lon": port_lon},
-            {"lat": info["lat"], "lon": info["lon"]},
-        ]
-    )
-    route_layer = pdk.Layer(
-        "LineLayer",
-        data=route_data,
-        get_source_position="[lon, lat]",
-        get_target_position="[lon, lat]",
-        get_color=color,
-        get_width=line_width,
-        pickable=True,
-    )
-
-    # --- VESSEL ANIMATION ---
-    st.markdown("### Animacja ruchu statku")
-    col_a1, col_a2 = st.columns(2)
-    start_anim = col_a1.button("▶️ Start animacji")
-    stop_anim = col_a2.button("⏹️ Stop animacji")
-
-    if start_anim:
-        st.session_state.anim_running = True
-        st.session_state.anim_frame = 0
-    if stop_anim:
-        st.session_state.anim_running = False
-
-    # Parametry animacji
-    FRAMES = 120  # liczba klatek na odcinek port→turbina
-    sleep_dt = 1.0 / max(anim_speed, 1)
-
-    # Funkcja interpolacji pozycji (lon,lat)
-    def interpolate(lon1, lat1, lon2, lat2, t):
-        # t in [0,1]
-        lon = lon1 + (lon2 - lon1) * t
-        lat = lat1 + (lat2 - lat1) * t
-        return lon, lat
-
-    # Placeholder na animowaną mapę
-    anim_placeholder = st.empty()
-
-    # Render statycznej trasy (gdy animacja nie działa)
-    if not st.session_state.anim_running:
-        vessel_lon, vessel_lat = port_lon, port_lat
-        vessel_layer = pdk.Layer(
+        # Warstwy pydeck
+        turbine_layer = pdk.Layer(
             "ScatterplotLayer",
-            data=pd.DataFrame([{"lon": vessel_lon, "lat": vessel_lat}]),
+            data=df_map,
             get_position="[lon, lat]",
-            get_color=[0, 255, 0],
-            get_radius=160 if hi_contrast else 120,
+            get_color=turbine_color,
+            get_radius=turbine_radius,
+            radius_units="pixels",
+            radius_min_pixels=2,
+            pickable=True,
         )
-        deck_route = pdk.Deck(
-            layers=[turbine_layer, port_layer, route_layer, vessel_layer],
-            initial_view_state=pdk.ViewState(
-                latitude=info["lat"], longitude=info["lon"], zoom=9.3, pitch=0
-            ),
-            tooltip={"text": "Trasa statku port → turbina"},
-            map_style=map_style_value,
-        )
-        anim_placeholder.pydeck_chart(deck_route)
-
-    # Animacja: render jednej klatki na przebieg skryptu i ponowne uruchomienie
-    if st.session_state.anim_running:
-        frame = st.session_state.anim_frame
-        t = min(frame / FRAMES, 1.0)
-        vessel_lon, vessel_lat = interpolate(
-            port_lon, port_lat, float(info["lon"]), float(info["lat"]), t
-        )
-
-        vessel_layer = pdk.Layer(
+        port_layer = pdk.Layer(
             "ScatterplotLayer",
-            data=pd.DataFrame([{"lon": vessel_lon, "lat": vessel_lat}]),
+            data=df_port,
             get_position="[lon, lat]",
-            get_color=[0, 255, 0],
-            get_radius=160 if hi_contrast else 120,
+            get_color=port_color,
+            get_radius=port_radius,
+            radius_units="pixels",
+            radius_min_pixels=2,
             pickable=True,
         )
 
-        deck_route = pdk.Deck(
-            layers=[turbine_layer, port_layer, route_layer, vessel_layer],
-            initial_view_state=pdk.ViewState(
-                latitude=info["lat"], longitude=info["lon"], zoom=9.3, pitch=0
-            ),
-            tooltip={"text": "Statek (animacja)"},
+        # Ikony: pydeck czyta plik lokalnie i koduje do base64 przed wysłaniem do przeglądarki.
+        atlas_uri = visual._get_icon_atlas_url()
+        if atlas_uri:
+            try:
+                icon_mapping = visual._get_icon_mapping()
+                df_map_icons = df_map.copy()
+                df_map_icons["icon"] = "wind"
+                df_port_icons = df_port.copy()
+                df_port_icons["icon"] = "port" if "port" in icon_mapping else "wind"
+                turbine_layer = pdk.Layer(
+                    "IconLayer",
+                    data=df_map_icons,
+                    get_icon="icon",
+                    get_position="[lon, lat]",
+                    icon_atlas=atlas_uri,
+                    icon_mapping=icon_mapping,
+                    size_scale=1,
+                    get_size=24,
+                    pickable=True,
+                )
+                port_layer = pdk.Layer(
+                    "IconLayer",
+                    data=df_port_icons,
+                    get_icon="icon",
+                    get_position="[lon, lat]",
+                    icon_atlas=atlas_uri,
+                    icon_mapping=icon_mapping,
+                    size_scale=1,
+                    get_size=28,
+                    pickable=True,
+                )
+            except Exception:
+                logger.exception("IconLayer dla mapy statycznej nie powiódł się – fallback do ScatterplotLayer")
+
+
+        view_state = pdk.ViewState(
+            latitude=df_map["lat"].mean(),
+            longitude=df_map["lon"].mean(),
+            zoom=9.2,
+            pitch=0,
+        )
+        deck = pdk.Deck(
+            layers=[turbine_layer, port_layer],
+            initial_view_state=view_state,
+            tooltip={"text": "{turbine_id}"},
             map_style=map_style_value,
         )
-        anim_placeholder.pydeck_chart(deck_route)
+        # Dodajemy warstwę podświetlenia wybranej turbiny (nakładka)
+        try:
+            highlight_color = [255, 80, 80] if hi_contrast else [255, 60, 60]
+            highlight_radius = max(turbine_radius * 2, turbine_radius + 4)
+            selected_layer = pdk.Layer(
+                "ScatterplotLayer",
+                data=selected_df,
+                get_position="[lon, lat]",
+                get_color=highlight_color,
+                get_radius=highlight_radius,
+                radius_units="pixels",
+                pickable=False,
+            )
+            # Umieszczamy warstwę zaznaczenia jako ostatnią (na wierzchu)
+            deck.layers.append(selected_layer)
+        except Exception:
+            logger.exception("Failed to create selected highlight layer")
 
-        # Update klatki i zaplanuj kolejny rerun (nie blokujemy serwera pętlą)
-        st.session_state.anim_frame = frame + 1
-        if st.session_state.anim_frame > FRAMES:
-            st.session_state.anim_running = False
+        st.pydeck_chart(deck)
+
+        # (DEBUG) removed fallback `st.map` to avoid duplicate maps in UI
+
+        # Wybór turbiny już wykonany wyżej; odwołaj się do `selected_fault`
+        info = df_map[df_map["fault_id"] == selected_fault].iloc[0]
+
+        st.subheader("Trasa port → turbina")
+        ref_vessel_speed = vessels[0].speed_kn if (vessels and len(vessels) > 0) else 20.0
+        distance_km = haversine(port_lat, port_lon, info["lat"], info["lon"])
+        transit_h = transit_time_km(distance_km, ref_vessel_speed)
+
+        duration_h = math.ceil(transit_h) * 2 + 8
+
+        def find_feasible_window(windows, hs_thr, wind_thr, reported_h, duration_h):
+            for w in sorted(windows, key=lambda w: w.start):
+                if (w.hs_m <= hs_thr) and (w.wind_ms <= wind_thr):
+                    start = max(w.start, reported_h)
+                    if start + duration_h <= w.end:
+                        return w
+            return None
+
+        w = find_feasible_window(
+            windows, hs_thr, wind_thr, reported_h=0, duration_h=duration_h
+        )
+
+        color = [0, 200, 0] if w is not None else [220, 0, 0]
+        status = (
+            "Warunki OK – operacja możliwa w najbliższym oknie"
+            if w is not None
+            else "Warunki przekroczone – brak okna dla operacji"
+        )
+
+        st.write(f"**Odległość:** {distance_km:.2f} km")
+        st.write(f"**Czas tranzytu (1 strona):** {transit_h:.2f} h")
+        st.write(f"**Status pogodowy:** {status}")
+
+        # --- ROUTE (static) ---
+        route_data = pd.DataFrame(
+            [
+                {"lat": port_lat, "lon": port_lon},
+                {"lat": info["lat"], "lon": info["lon"]},
+            ]
+        )
+        route_layer = pdk.Layer(
+            "LineLayer",
+            data=route_data,
+            get_source_position="[lon, lat]",
+            get_target_position="[lon, lat]",
+            get_color=color,
+            get_width=line_width,
+            pickable=True,
+        )
+
+        # --- VESSEL ANIMATION ---
+        st.markdown("### Animacja ruchu statku")
+        # Use modular animation renderer (handles start/stop and session_state internally)
+        visual.render_animation(
+            float(info["lat"]),
+            float(info["lon"]),
+            port_lat,
+            port_lon,
+            hi_contrast,
+            anim_speed,
+            df_map=df_map,
+            df_port=df_port,
+            route_data=route_data,
+            map_style=map_style_value,
+            turbine_color=turbine_color,
+            port_color=port_color,
+            turbine_radius=turbine_radius,
+            port_radius=port_radius,
+            line_width=line_width,
+        )
+
+        st.markdown("---")
+
+        # Gantt – harmonogram
+        st.subheader("Harmonogram napraw (Gantt)")
+        df_gantt = df[df["start"].notna()].copy()
+        if len(df_gantt) > 0:
+            chart = (
+                alt.Chart(df_gantt)
+                .mark_bar()
+                .encode(
+                    x=alt.X("start:Q", title="Godzina startu"),
+                    x2=alt.X2("end:Q", title="Godzina zakończenia"),
+                    y=alt.Y("fault_id:N", title="Usterka", sort=None),
+                    color=alt.Color("vessel_name:N", title="Statek"),
+                    tooltip=[
+                        "fault_id",
+                        "turbine_id",
+                        "vessel_name",
+                        "start",
+                        "end",
+                        "cost_pln",
+                        "priority",
+                        "distance_km",
+                        "transit_h",
+                    ],
+                )
+                .properties(height=450)
+            )
+            st.altair_chart(chart, width="stretch")
         else:
-            time.sleep(sleep_dt)
-            st.experimental_rerun()
+            st.info("Brak zaplanowanych napraw dla zadanych parametrów.")
+
+        st.markdown("---")
+
+        # Tabela harmonogramu
+        st.subheader("Tabela harmonogramu")
+        st.dataframe(df)
+
+        st.markdown("---")
+
+        # --- Solver optymalny (PuLP) vs. heurystyka ---
+        st.subheader("Porównanie z rozwiązaniem optymalnym")
+        solver_disabled = len(faults) > SOLVER_MAX_FAULTS
+        if solver_disabled:
+            st.caption(
+                f"Porównanie z rozwiązaniem optymalnym dostępne dla ≤{SOLVER_MAX_FAULTS} usterek "
+                f"(limit czasu obliczeń solvera). Zmniejsz „Liczbę usterek” i uruchom symulację ponownie."
+            )
+        if st.button(
+            "Porównaj z rozwiązaniem optymalnym (PuLP)",
+            disabled=solver_disabled,
+            key="solve_optimal_btn",
+        ):
+            with st.spinner("Solver liczy (near-)optymalny harmonogram..."):
+                sched_opt, cost_opt, meta = solve_optimal_schedule(
+                    faults,
+                    windows,
+                    vessels,
+                    hs_thr=hs_thr,
+                    wind_thr=wind_thr,
+                    workday_hours=(8 if workday_8h else 24),
+                )
+            st.session_state.optimal_data = (sched_opt, cost_opt, meta)
+            logger.info(
+                "Optimal solver run: status=%s runtime_s=%.2f num_candidates=%s",
+                meta["status"], meta["runtime_s"], meta["num_candidates"],
+            )
+
+        if st.session_state.get("optimal_data") is not None:
+            sched_opt, cost_opt, meta = st.session_state.optimal_data
+            planned_opt = sum(1 for r in sched_opt if r["start"] is not None)
+            unplanned_opt = len(sched_opt) - planned_opt
+
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Koszt (heurystyka)", f"{tot_cost:,.0f} PLN")
+            c2.metric(
+                "Koszt (optymalny)",
+                f"{cost_opt:,.0f} PLN",
+                delta=f"{cost_opt - tot_cost:,.0f} PLN",
+                delta_color="inverse",
+            )
+            c3.metric(
+                "Niezaplanowane (optymalny)",
+                unplanned_opt,
+                delta=unplanned_opt - unplanned,
+                delta_color="inverse",
+            )
+
+            status_labels = {
+                "optimal": "optimum dowiedzione",
+                "time_limit": "najlepsze znalezione (limit czasu, optimum niedowiedzione)",
+                "infeasible": "brak rozwiązania",
+                "no_candidates": "brak wykonalnych kombinacji",
+            }
+            st.caption(
+                f"Status solvera: {status_labels.get(meta['status'], meta['status'])} · "
+                f"czas: {meta['runtime_s']:.1f}s · kandydatów: {meta['num_candidates']}"
+            )
+    else:
+        st.info(
+            "Ustaw parametry po lewej i kliknij Start symulacji, aby wygenerować harmonogram."
+        )
+
+with tab2:
+    st.markdown(
+        "Symulacja dzień po dniu: nowe usterki napływają w czasie, a plan jest "
+        "przeliczany na bieżąco na podstawie nierozwiązanego backlogu. Pokazuje, "
+        "czy flota „nadąża” z naprawami, czy backlog rośnie bez końca."
+    )
+
+    rc1, rc2, rc3 = st.columns(3)
+    with rc1:
+        roll_horizon_days = st.slider(
+            "Liczba dni symulacji", 7, 30, 14, key="roll_horizon_days"
+        )
+    with rc2:
+        roll_total_faults = st.slider(
+            "Liczba usterek (cały horyzont)", 20, 300, 100, key="roll_total_faults"
+        )
+    with rc3:
+        roll_fleet_size = st.slider(
+            "Liczba statków w flocie", 1, 6, 3, key="roll_fleet_size"
+        )
+
+    roll_run = st.button("Uruchom symulację wielodniową", key="roll_run_btn")
 
     st.markdown("---")
 
-    # Gantt – harmonogram
-    st.subheader("Harmonogram napraw (Gantt)")
-    df_gantt = df[df["start"].notna()].copy()
-    if len(df_gantt) > 0:
-        chart = (
-            alt.Chart(df_gantt)
+    if roll_run:
+        f2 = gen_faults(n=roll_total_faults, seed=42, arrival_horizon_h=roll_horizon_days * 24)
+        w2 = gen_windows(horizon_days=roll_horizon_days, seed=42)
+        v2 = gen_vessels(count=roll_fleet_size)
+        with st.spinner("Symulacja wielodniowa w toku..."):
+            snapshots, df_committed = run_rolling_simulation(
+                f2, w2, v2, roll_horizon_days,
+                hs_thr=hs_thr, wind_thr=wind_thr,
+                workday_hours=(8 if workday_8h else 24),
+            )
+        st.session_state.rolling_data = (snapshots, df_committed)
+        logger.info(
+            "Rolling simulation run: horizon_days=%s total_faults=%s fleet_size=%s",
+            roll_horizon_days, roll_total_faults, roll_fleet_size,
+        )
+
+    if st.session_state.get("rolling_data") is not None:
+        snapshots, df_committed = st.session_state.rolling_data
+        df_snap = snapshots_to_dataframe(snapshots)
+
+        st.subheader("KPI – Symulacja wielodniowa")
+        k1, k2, k3 = st.columns(3)
+        k1.metric("Rozwiązane naprawy", int(df_snap["resolved_today"].sum()))
+        k2.metric("Backlog na koniec horyzontu", int(df_snap["backlog_after"].iloc[-1]))
+        k3.metric("Łączny koszt [PLN]", f"{df_snap['cumulative_cost'].iloc[-1]:,.0f}")
+
+        st.markdown("---")
+
+        st.subheader("Backlog w czasie")
+        st.altair_chart(
+            alt.Chart(df_snap)
+            .mark_line(point=True)
+            .encode(
+                x=alt.X("day:Q", title="Dzień symulacji"),
+                y=alt.Y("backlog_after:Q", title="Usterki w backlogu"),
+                tooltip=["day", "backlog_after", "new_faults", "resolved_today"],
+            )
+            .properties(height=300),
+            width="stretch",
+        )
+
+        st.subheader("Nowe vs. rozwiązane usterki per dzień")
+        long_df = df_snap.melt(
+            id_vars="day",
+            value_vars=["new_faults", "resolved_today"],
+            var_name="seria",
+            value_name="liczba",
+        )
+        st.altair_chart(
+            alt.Chart(long_df)
             .mark_bar()
             .encode(
-                x=alt.X("start:Q", title="Godzina startu"),
-                x2=alt.X2("end:Q", title="Godzina zakończenia"),
-                y=alt.Y("fault_id:N", title="Usterka", sort=None),
-                color=alt.Color("vessel_name:N", title="Statek"),
-                tooltip=[
-                    "fault_id",
-                    "turbine_id",
-                    "vessel_name",
-                    "start",
-                    "end",
-                    "cost_pln",
-                    "priority",
-                    "distance_km",
-                    "transit_h",
-                ],
+                x=alt.X("day:O", title="Dzień symulacji"),
+                y=alt.Y("liczba:Q", title="Liczba usterek"),
+                color=alt.Color("seria:N", title="Seria"),
+                xOffset="seria:N",
+                tooltip=["day", "seria", "liczba"],
             )
-            .properties(height=450)
+            .properties(height=300),
+            width="stretch",
         )
-        st.altair_chart(chart, use_container_width=True)
+
+        st.subheader("Koszt skumulowany")
+        st.altair_chart(
+            alt.Chart(df_snap)
+            .mark_line(point=True)
+            .encode(
+                x=alt.X("day:Q", title="Dzień symulacji"),
+                y=alt.Y("cumulative_cost:Q", title="Koszt skumulowany [PLN]"),
+                tooltip=["day", "cumulative_cost", "cost_today"],
+            )
+            .properties(height=300),
+            width="stretch",
+        )
+
+        st.subheader("Harmonogram zrealizowanych napraw (Gantt)")
+        chart = gantt_chart(df_committed)
+        if chart is not None:
+            st.altair_chart(chart, width="stretch")
+        else:
+            st.info("Brak zrealizowanych napraw dla zadanych parametrów.")
+
+        st.subheader("Dziennik symulacji")
+        st.dataframe(df_snap)
     else:
-        st.info("Brak zaplanowanych napraw dla zadanych parametrów.")
-
-    st.markdown("---")
-
-    # Tabela harmonogramu
-    st.subheader("Tabela harmonogramu")
-    st.dataframe(df)
-else:
-    st.info(
-        "Ustaw parametry po lewej i kliknij Start symulacji, aby wygenerować harmonogram."
-    )
+        st.info(
+            "Ustaw parametry powyżej i kliknij „Uruchom symulację wielodniową”, "
+            "aby zobaczyć jak backlog usterek zmienia się w czasie."
+        )

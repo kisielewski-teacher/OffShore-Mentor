@@ -1,0 +1,162 @@
+Instrukcja Techniczna
+
+
+
+1. Cel projektu
+
+Projekt OffShore ma na celu prognozowanie warunków morskich i pogodowych w obszarach offshore (np. dla farm wiatrowych, platform wiertniczych, żeglugi).
+Dlaczego to ważne?
+
+Bezpieczeństwo operacji na morzu.
+
+Optymalizacja pracy (np. planowanie transportu, konserwacji).
+
+Redukcja ryzyka w trudnych warunkach pogodowych.
+
+
+
+✅ 2. Czym jest OffShore i jakie dane analizujemy?
+
+„Offshore” oznacza obszary poza lądem, głównie na morzu.
+Analizujemy:
+
+Dane oceanograficzne: wysokość fali, prędkość prądów, temperatura wody.
+
+Dane pogodowe: wiatr, temperatura powietrza, ciśnienie, wilgotność.
+
+Dane dodatkowe: np. ruch statków (AIS), dane satelitarne.
+
+
+
+✅ 3. Źródła danych
+
+API pogodowe (np. IMGW, OpenWeather) – dostarczają dane o wietrze, temperaturze, ciśnieniu.
+
+API oceanograficzne (np. NOAA, Copernicus) – dane o falach, prądach, temperaturze wody.
+
+AIS (Automatic Identification System) – ruch statków (opcjonalnie).
+
+API = „drzwi do danych”: wysyłamy zapytanie, dostajemy odpowiedź w formie liczb.
+
+
+
+✅ 4. Jak działa pipeline (krok po kroku)
+
+Pobranie danych z API (pogoda, oceanografia).
+
+Łączenie danych w jeden zbiór (np. co godzinę).
+
+Tworzenie cech – np. średnia prędkość wiatru z ostatnich 3 godzin, trend wysokości fali.
+
+Trening modelu – uczymy algorytm przewidywać przyszłe warunki.
+
+Prognoza – model przewiduje np. wysokość fali na najbliższe godziny.
+
+Dashboard – pokazujemy wyniki w prostym panelu (Streamlit).
+
+
+
+✅ 5. Technologia: język, biblioteki, narzędzia
+
+Język: Python (3.10+).
+
+Środowisko: wirtualne (.venv), zarządzanie pakietami przez pip.
+
+Biblioteki: 
+
+requests – pobieranie danych z API.
+
+pandas – obróbka danych.
+
+numpy – obliczenia.
+
+scikit-learn – modelowanie (np. RandomForest).
+
+joblib – zapis modeli.
+
+streamlit – dashboard.
+
+matplotlib / plotly – wykresy.
+
+python-dotenv – zarządzanie kluczami API.
+
+
+
+✅ 6. Główne moduły projektu
+
+src/
+
+  offshore_fetch.py    # Pobieranie danych oceanograficznych
+
+  weather_fetch.py     # Pobieranie danych pogodowych
+
+  merge_hourly.py      # Łączenie danych w zbiór godzinowy
+
+  features.py          # Tworzenie cech
+
+  train.py             # Trening modelu
+
+  predict.py           # Prognoza
+
+dashboard/
+
+  offshore_dashboard.py # Streamlit – panel użytkownika
+
+scripts/
+
+  run_hourly.sh        # Automatyzacja odświeżania danych
+
+
+
+✅ 7. Jak to zostało scalone?
+
+Każdy krok zapisuje dane w plikach CSV lub model w Pickle.
+
+Dashboard czyta dane i pokazuje je w czasie rzeczywistym.
+
+Automatyzacja przez skrypty bash (run_hourly, run_train_predict) lub harmonogram (cron).
+
+
+
+✅ 8. Automatyzacja i uruchamianie
+
+run_hourly – pobiera nowe dane i aktualizuje prognozy.
+
+run_train_predict – okresowo trenuje model na nowych danych.
+
+Dashboard – uruchamiany komendą: 
+
+streamlit run offshore_dashboard.py
+
+
+
+✅ 9. Model i cechy
+
+Model: np. RandomForestRegressor.
+
+Cechy: 
+
+Średnie kroczące (np. wiatr z ostatnich 3h).
+
+Trendy (zmiany godzinowe).
+
+Pogoda + oceanografia.
+
+Target: np. wysokość fali na najbliższe godziny.
+
+
+
+✅ 10. Bezpieczeństwo
+
+Klucze API w .env.
+
+Obsługa błędów (fallback na ostatnie wartości).
+
+
+
+✅ 11. Ograniczenia i plany
+
+Ograniczenia: luki w danych, różna jakość źródeł.
+
+Plany: integracja z danymi satelitarnymi, dłuższy horyzont prognozy, alerty.
+

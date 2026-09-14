@@ -1,0 +1,151 @@
+OPIS PROJEKTU — OFFSHORE MENTOR
+
+(cele, potrzeby, pojęcia, wyjaśnienia, działanie wykresów)
+
+1. Wprowadzenie
+
+Offshore Mentor to aplikacja symulacyjna wspierająca planowanie serwisu turbin wiatrowych na morzu. Projekt powstał w odpowiedzi na rosnące potrzeby sektora offshore wind w Polsce, szczególnie w kontekście rozwoju Morskich Farm Wiatrowych na Bałtyku.
+Celem aplikacji jest pokazanie, jak złożone i zależne od pogody jest planowanie napraw oraz jak można to usprawnić dzięki algorytmom i wizualizacji danych.
+
+2. Cel projektu
+
+Główne cele projektu:
+
+Symulacja procesu planowania napraw turbin offshore
+Aplikacja generuje usterki, okna pogodowe i dostępność statków, a następnie planuje naprawy.
+
+Pokazanie wpływu pogody na logistykę offshore
+Wysokość fali (Hs) i prędkość wiatru decydują o tym, czy statek może bezpiecznie podejść do turbiny.
+
+Uwzględnienie czasu tranzytu statku
+Statek musi dopłynąć z portu do turbiny i wrócić — to kluczowy element kosztów i czasu operacji.
+
+Wizualizacja harmonogramu w formie wykresu Gantta
+Dzięki temu użytkownik widzi, kiedy i jak długo trwa każda operacja.
+
+Analiza KPI (Key Performance Indicators)
+Aplikacja podaje liczbę zaplanowanych napraw, niezaplanowanych oraz całkowity koszt operacji.
+
+3. Potrzeby, które projekt rozwiązuje
+
+Brak narzędzi edukacyjnych do nauki logistyki offshore
+Uczniowie i studenci nie mają dostępu do realistycznych symulatorów.
+
+Zrozumienie zależności między pogodą a serwisem
+Offshore to branża ekstremalnie zależna od warunków pogodowych.
+
+Wizualizacja procesu planowania
+Wiele osób nie rozumie, jak skomplikowane jest dopasowanie okien pogodowych, zasobów i priorytetów.
+
+Przygotowanie do pracy w sektorze MFW
+Projekt uczy myślenia operacyjnego i planistycznego.
+
+4. Wyjaśnienie kluczowych pojęć
+
+Usterka (Fault)
+
+Zdarzenie wymagające naprawy turbiny. Każda usterka ma:
+
+priorytet,
+
+czas zgłoszenia,
+
+czas naprawy,
+
+współrzędne geograficzne turbiny.
+
+Okno pogodowe (Weather Window)
+
+Przedział czasu, w którym warunki na morzu pozwalają na bezpieczną pracę.
+Jeśli fala lub wiatr przekraczają próg — operacja jest niemożliwa.
+
+Statek serwisowy (CTV – Crew Transfer Vessel)
+
+Jednostka, która:
+
+przewozi techników,
+
+ma określoną prędkość,
+
+ma koszt operacyjny,
+
+musi być dostępna w danym czasie.
+
+Tranzyt (Transit)
+
+Czas potrzebny na dopłynięcie z portu do turbiny i powrót.
+Obliczany na podstawie:
+
+odległości (haversine),
+
+prędkości statku (węzły → km/h).
+
+KPI (Key Performance Indicators)
+
+Wskaźniki efektywności:
+
+liczba zaplanowanych napraw,
+
+liczba niezaplanowanych,
+
+koszt operacji.
+
+5. Jak działa algorytm planowania?
+
+Sortuje usterki wg priorytetu i czasu zgłoszenia.
+
+Dla każdej usterki:
+
+oblicza odległość turbiny od portu,
+
+oblicza czas tranzytu,
+
+sprawdza dostępne okna pogodowe,
+
+sprawdza dostępność statków.
+
+Jeśli znajdzie pasujące okno → planuje naprawę.
+
+Jeśli nie → oznacza jako niezaplanowaną.
+
+6. Jak działa wykres Gantta?
+
+Wykres Gantta to narzędzie do wizualizacji harmonogramów.
+W naszym projekcie:
+
+oś X — czas (godziny od początku tygodnia),
+
+oś Y — ID usterki,
+
+długość paska — czas operacji (tranzyt + naprawa + powrót),
+
+kolor paska — statek wykonujący naprawę.
+
+Co pokazuje wykres Gantta?
+
+Kiedy zaczyna się i kończy naprawa
+Widać dokładnie, w których godzinach statek jest zajęty.
+
+Który statek wykonuje którą naprawę
+Kolory pozwalają łatwo odróżnić jednostki.
+
+Czy naprawy nakładają się w czasie
+Jeśli statek jest zajęty, nie może wykonać innej operacji.
+
+Wpływ pogody i tranzytu
+Dłuższe paski = większa odległość turbiny od portu.
+
+Wykres Gantta jest kluczowy, bo pozwala natychmiast zrozumieć cały harmonogram.
+
+7. Dlaczego ten projekt jest wartościowy?
+
+pokazuje realne problemy branży offshore,
+
+uczy planowania operacyjnego,
+
+łączy programowanie, logistykę i energetykę,
+
+jest interaktywny i wizualny,
+
+może być rozwijany o kolejne funkcje (koszty, mapy, optymalizację).
+

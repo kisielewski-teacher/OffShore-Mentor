@@ -1,0 +1,77 @@
+TECHNICZNE PODSUMOWANIE PROJEKTU (dla nowego modelu AI)
+
+1. Cel skryptu / aplikacji
+
+Aplikacja to interaktywny symulator serwisowania farm wiatrowych offshore, napisany w Streamlit.
+Jej zadania:
+
+generować losowe usterki turbin offshore (z realistycznymi współrzędnymi na morzu),
+
+generować okna pogodowe i dostępne statki,
+
+planować naprawy z uwzględnieniem pogody, priorytetów, czasu tranzytu i kosztów,
+
+wyświetlać KPI, mapę turbin + portu, harmonogram Gantta oraz tabelę wyników,
+
+umożliwiać użytkownikowi sterowanie parametrami symulacji.
+
+2. Aktualny stos technologiczny
+
+Projekt korzysta z:
+
+Python 3.x
+
+Streamlit – UI i wizualizacja mapy
+
+pandas – struktury danych
+
+altair – wykres Gantta
+
+moduły własne:
+
+data.generate – generowanie danych wejściowych
+
+planner.plan – logika planowania napraw
+
+viz.gantt (opcjonalnie) – niestandardowy wykres Gantta
+
+Brak zewnętrznych API, Selenium, requests itp.
+
+3. Finalna, kompletna i działająca wersja kodu (scalona)
+
+📄 streamlit_app.py
+
+import streamlit as st import pandas as pd import altair as alt from data.generate import gen_faults, gen_windows, gen_vessels from planner.plan import plan_repairs try: from viz.gantt import gantt_chart USE_GANTT_MODULE = True except ImportError: gantt_chart = None USE_GANTT_MODULE = False st.set_page_config(page_title="Offshore Mentor", layout="wide") st.title("Offshore Mentor – Symulator serwisowania farm wiatrowych offshore") st.markdown("Aplikacja symuluje planowanie napraw turbin offshore z uwzględnieniem okien pogodowych, priorytetów usterek, czasu tranzytu statków oraz kosztów operacji.") col1, col2, col3 = st.columns(3) with col1: n_faults = st.slider("Liczba usterek", 10, 80, 30) hs_thr = st.slider("Próg Hs [m]", 0.5, 3.0, 1.5, 0.1) with col2: wind_thr = st.slider("Próg wiatru [m/s]", 5.0, 20.0, 15.0, 0.5) day8h = st.checkbox("Dzień pracy = 8h (szacunek kosztów)", value=True) with col3: st.write("Kliknij, aby uruchomić symulację:") run_sim = st.button("Start symulacji") st.markdown("---") if run_sim: faults = gen_faults(n_faults) windows = gen_windows() vessels = gen_vessels() schedule, tot_cost = plan_repairs( faults, windows, vessels, hs_thr=hs_thr, wind_thr=wind_thr ) df = pd.DataFrame(schedule) st.subheader("KPI – Kluczowe wskaźniki") planned = int(df["start"].notna().sum()) unplanned = int(df["start"].isna().sum()) col_k1, col_k2, col_k3 = st.columns(3) col_k1.metric("Zaplanowane naprawy", planned) col_k2.metric("Niezaplanowane", unplanned) col_k3.metric("Szac. koszt [PLN]", f"{tot_cost:,.0f}") st.markdown("---") st.subheader("Mapa turbin i portu bazowego") df_map = pd.DataFrame([ { "lat": f.lat, "lon": f.lon, "fault_id": f.fault_id, "turbine_id": f.turbine_id, "priority": f.priority, "type": "turbina" } for f in faults ]) port_lat = 54.580 port_lon = 16.860 df_port = pd.DataFrame([{ "lat": port_lat, "lon": port_lon, "fault_id": "PORT", "turbine_id": "Port Ustka", "priority": 0, "type": "port" }]) df_map_all = pd.concat([df_map, df_port], ignore_index=True) st.map(df_map_all[["lat", "lon"]]) selected_fault = st.selectbox( "Wybierz punkt na mapie:", df_map_all["fault_id"].tolist() ) info = df_map_all[df_map_all["fault_id"] == selected_fault].iloc[0] st.write("**Szczegóły:**") st.write(f"- ID: {info.fault_id}") st.write(f"- Typ: {info.type}") st.write(f"- Nazwa: {info.turbine_id}") st.write(f"- Priorytet: {info.priority}") st.write(f"- Szerokość geogr.: {info.lat}") st.write(f"- Długość geogr.: {info.lon}") st.markdown("---") st.subheader("Harmonogram napraw (Gantt)") df_gantt = df[df["start"].notna()].copy() if len(df_gantt) > 0: if USE_GANTT_MODULE and gantt_chart is not None: chart = gantt_chart(df_gantt) else: chart = ( alt.Chart(df_gantt) .mark_bar() .encode( x=alt.X("start:Q", title="Godzina startu"), x2=alt.X2("end:Q", title="Godzina zakończenia"), y=alt.Y("fault_id:N", title="Usterka", sort=None), color=alt.Color("vessel_name:N", title="Statek"), tooltip=[ "fault_id", "turbine_id", "vessel_name", "start", "end", "cost_pln", "priority", "distance_km", "transit_h" ] ) .properties(height=450) ) st.altair_chart(chart, use_container_width=True) else: st.info("Brak zaplanowanych napraw dla zadanych parametrów.") st.markdown("---") st.subheader("Tabela harmonogramu") st.dataframe(df) else: st.info("Ustaw parametry po lewej i kliknij Start symulacji, aby wygenerować harmonogram.") 
+
+
+
+📄 data/generate.py
+
+import random from planner.plan import Fault, Window, Vessel def gen_faults(n=30): faults = [] for i in range(n): # Turbiny ~20 km na zachód od Ustki, zawsze na morzu lat = random.uniform(54.65, 54.75) lon = random.uniform(16.40, 16.70) faults.append(Fault( fault_id=f"F-{i:03d}", turbine_id=f"T-{random.randint(1,50):03d}", reported_h=random.randint(0, 7*24 - 24), repair_hours=random.choice([4, 6, 8, 12]), priority=random.choice([1, 2, 3]), lat=lat, lon=lon )) return faults def gen_windows(): windows = [] t = 0 while t < 7 * 24: dur = random.choice([6, 8, 12, 24]) windows.append(Window( win_id=f"W-{len(windows):03d}", start=t, end=min(t + dur, 7 * 24), hs_m=round(random.uniform(0.5, 2.5), 1), wind_ms=round(random.uniform(4, 18), 1) )) t += dur return windows def gen_vessels(): return [ Vessel("V-1", "CTV-Alpha", teams=2, speed_kn=20, day_cost_pln=3500.0), Vessel("V-2", "CTV-Beta", teams=1, speed_kn=18, day_cost_pln=3200.0), ] 
+
+
+
+4. Rozwiązane problemy (nie powtarzać!)
+
+❌ Błędy niedomkniętych stringów ("---) → naprawione
+
+❌ Turbiny generowane na lądzie → poprawione zakresy współrzędnych
+
+❌ Mapa pokazywała punkty w złych miejscach → ustalono stabilny obszar na morzu
+
+❌ Problemy z importem Gantta → dodano fallback
+
+❌ Niespójne współrzędne portu → ustalone na stałe (Ustka)
+
+5. Zadanie do wykonania jako następne
+
+Dodać wizualizację trasy statku (linia port → turbina) na mapie.
+
+To będzie kolejny moduł, który:
+
+po wybraniu turbiny narysuje linię od portu do turbiny,
+
+obliczy długość trasy,
+
+wyświetli ją na mapie (np. przez pydeck lub st.pydeck_chart).
+
