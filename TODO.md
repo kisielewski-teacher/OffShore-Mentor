@@ -1,0 +1,27 @@
+# TODO – przygotowanie Offshore Mentor do sprzedaży
+
+Ten plik śledzi zadania związane z czyszczeniem projektu, weryfikacją licencji
+i przygotowaniem programu do sprzedaży. Ukończone punkty są usuwane z listy;
+nowe wynikłe potrzeby są dopisywane.
+
+Ostatnia aktualizacja: 2026-09-27 (wersja release bez okna konsoli + logowanie/dialog błędów)
+
+## Do zrobienia — prawne / licencyjne
+
+- [ ] `LICENSE.txt` to szablon — przed faktyczną sprzedażą uzupełnić dane autora/firmy, jurysdykcję, warunki wsparcia/zwrotów i **skonsultować z prawnikiem**.
+- [ ] Przy każdej aktualizacji `requirements.txt` ponownie zweryfikować licencje nowych/zmienionych zależności (`pip show <pakiet>` lub `pip-licenses`).
+- [ ] Zdecydować i spisać model sprzedaży (jednorazowa licencja / subskrypcja / liczba stanowisk) i odzwierciedlić to w `LICENSE.txt` oraz w materiałach sprzedażowych.
+
+## Do zrobienia — pakowanie / dystrybucja (.exe, instalator)
+
+- [ ] **Wymaga zakupu przez Ciebie:** certyfikat code-signing (OV/EV) od CA (np. DigiCert, Sectigo, SSL.com) — to jedyny krok, którego nie da się zautomatyzować (wymaga weryfikacji tożsamości firmy/autora przez CA i płatności). Skrypty budowania (`packaging/build_exe.ps1` — parametry `-CertPath`/`-CertPassword`, oraz `packaging/installer.iss` — sekcja `SignTool`) są już przygotowane do podpisywania .exe/instalatora, wystarczy podać certyfikat (instrukcja: `packaging/README_BUILD.md`, sekcja "Code signing"). Bez tego Windows SmartScreen będzie ostrzegał kupujących przy pierwszym uruchomieniu.
+- [ ] `packaging/version_info.txt` (metadane wersji .exe) ma placeholder `CompanyName`/`LegalCopyright` = "Offshore Mentor" — uzupełnić realną nazwą firmy/autora (spójnie z `LICENSE.txt`) i synchronizować numer wersji przy każdym wydaniu z `AppVersion` w `installer.iss`.
+
+## Do zrobienia — jakość / utrzymanie
+
+- [ ] Brak CI (np. GitHub Actions) uruchamiającego `pytest` + `ruff` automatycznie przy każdym push/PR — zalecane przed sprzedażą, aby wyłapywać regresje.
+
+## Do zrobienia — materiały sprzedażowe
+
+- [ ] Przygotować krótki opis produktu / landing page / cennik (obecny `README.md` i `INSTRUKCJA.md` są dokumentacją techniczną, nie materiałem marketingowym).
+- [ ] Przygotować zrzuty ekranu / demo wideo aplikacji do materiałów sprzedażowych.

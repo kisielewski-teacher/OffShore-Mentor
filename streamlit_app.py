@@ -111,10 +111,137 @@ def do_rerun():
         return
 
 
-st.set_page_config(page_title="Offshore Mentor", layout="wide")
-st.title("Offshore Mentor – Symulator serwisowania farm wiatrowych offshore")
+st.set_page_config(page_title="Offshore Mentor", page_icon="⚓", layout="wide")
+
 st.markdown(
-    "Aplikacja symuluje planowanie napraw turbin offshore z uwzględnieniem okien pogodowych, priorytetów usterek, czasu tranzytu statków oraz kosztów operacji."
+    """
+    <style>
+    @keyframes omFadeInUp {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes omGradientShift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+
+    .om-hero {
+        background: linear-gradient(120deg, #ECFDF9, #EAF4FE, #ECFDF9);
+        background-size: 200% 200%;
+        border: 1px solid #BFE9E1;
+        border-radius: 16px;
+        padding: 1.6rem 2rem;
+        margin-bottom: 1.2rem;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+        animation: omFadeInUp 0.5s ease-out, omGradientShift 10s ease-in-out infinite;
+    }
+    .om-hero h1 {
+        margin: 0 0 0.4rem 0;
+        font-size: 1.9rem;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        color: #0F2A3D;
+    }
+    .om-hero p {
+        margin: 0;
+        color: #52667A;
+        font-size: 0.98rem;
+        max-width: 900px;
+    }
+    .om-badge-row { margin-top: 0.8rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .om-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.22rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+    }
+    .om-badge-teal { background: #E6FFFB; color: #0D9488; border: 1px solid #99E6DA; }
+    .om-badge-amber { background: #FFF7E6; color: #B45309; border: 1px solid #FCD9A0; }
+    .om-badge-coral { background: #FEF2F2; color: #B91C1C; border: 1px solid #FBC5C5; }
+
+    h3 { position: relative; padding-left: 0.7rem; border-left: 3px solid #0D9488; }
+
+    div[data-testid="stMetric"] {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 0.9rem 1.1rem 0.7rem 1.1rem;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        animation: omFadeInUp 0.4s ease-out backwards;
+    }
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(13, 148, 136, 0.15);
+    }
+    div[data-testid="stMetricLabel"] { color: #64748B !important; }
+    div[data-testid="stMetricValue"] { color: #0F2A3D !important; }
+
+    /* Rozłożone w czasie pojawianie się kart KPI ułożonych w st.columns(3) */
+    div[data-testid="column"]:nth-of-type(1) div[data-testid="stMetric"] { animation-delay: 0s; }
+    div[data-testid="column"]:nth-of-type(2) div[data-testid="stMetric"] { animation-delay: 0.08s; }
+    div[data-testid="column"]:nth-of-type(3) div[data-testid="stMetric"] { animation-delay: 0.16s; }
+
+    /* Płynne pojawianie się zawartości przy przełączaniu zakładek */
+    [data-baseweb="tab-panel"] { animation: omFadeInUp 0.35s ease-out; }
+
+    div.stButton > button {
+        background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+        color: #FFFFFF;
+        font-weight: 700;
+        border: none;
+        border-radius: 999px;
+        padding: 0.5rem 1.4rem;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+        box-shadow: 0 4px 14px rgba(13, 148, 136, 0.25);
+    }
+    div.stButton > button:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.06);
+        box-shadow: 0 6px 18px rgba(13, 148, 136, 0.35);
+    }
+    div.stButton > button:disabled {
+        background: #E2E8F0;
+        color: #94A3B8;
+        box-shadow: none;
+    }
+
+    .stTabs [data-baseweb="tab-list"] { gap: 0.4rem; border-bottom: 1px solid #E2E8F0; }
+    .stTabs [data-baseweb="tab"] {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #64748B;
+        padding: 0.6rem 1.1rem;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #0D9488 !important;
+        border-bottom: 2px solid #0D9488 !important;
+    }
+
+    hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(13, 148, 136, 0) 0%, rgba(13, 148, 136, 0.35) 50%, rgba(13, 148, 136, 0) 100%);
+        margin: 1.1rem 0;
+    }
+    </style>
+
+    <div class="om-hero">
+      <h1>⚓ Offshore Mentor</h1>
+      <p>Symulator planowania serwisowania morskich farm wiatrowych offshore – okna pogodowe, priorytety usterek,
+      czas tranzytu statków i koszty operacji, z porównaniem do rozwiązania optymalnego oraz symulacją wielodniową.</p>
+      <div class="om-badge-row">
+        <span class="om-badge om-badge-teal">🌊 Bałtyk</span>
+        <span class="om-badge om-badge-teal">🚢 Flota CTV</span>
+        <span class="om-badge om-badge-amber">⚙️ Solver optymalny (PuLP)</span>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 # --- Init session state for animation ---
@@ -145,20 +272,21 @@ tab1, tab2 = st.tabs(["Symulacja jednorazowa", "Symulacja wielodniowa"])
 with tab1:
     # --- Symulacja ---
     if run_sim:
-        faults = gen_faults(n_faults)
-        windows = gen_windows()
-        vessels = gen_vessels()
-        logger.info("Simulation started: n_faults=%s, hs_thr=%s, wind_thr=%s", n_faults, hs_thr, wind_thr)
+        with st.spinner("🌊 Generuję usterki, okna pogodowe i harmonogram..."):
+            faults = gen_faults(n_faults)
+            windows = gen_windows()
+            vessels = gen_vessels()
+            logger.info("Simulation started: n_faults=%s, hs_thr=%s, wind_thr=%s", n_faults, hs_thr, wind_thr)
 
-        schedule, tot_cost = plan_repairs(
-            faults,
-            windows,
-            vessels,
-            hs_thr=hs_thr,
-            wind_thr=wind_thr,
-            workday_hours=(8 if workday_8h else 24),
-        )
-        df = pd.DataFrame(schedule)
+            schedule, tot_cost = plan_repairs(
+                faults,
+                windows,
+                vessels,
+                hs_thr=hs_thr,
+                wind_thr=wind_thr,
+                workday_hours=(8 if workday_8h else 24),
+            )
+            df = pd.DataFrame(schedule)
         st.session_state.sim_data = (faults, windows, vessels, df, tot_cost)
 
     # If simulation already stored in session state, use it so animation survives reruns
@@ -167,7 +295,7 @@ with tab1:
         logger.info("Loaded simulation from session_state: faults=%s, windows=%s, vessels=%s", len(faults), len(windows), len(vessels))
 
         # KPI
-        st.subheader("KPI – Kluczowe wskaźniki")
+        st.subheader("📊 KPI – Kluczowe wskaźniki")
         planned = int(df["start"].notna().sum())
         unplanned = int(df["start"].isna().sum())
         col_k1, col_k2, col_k3 = st.columns(3)
@@ -178,7 +306,7 @@ with tab1:
         st.markdown("---")
 
         # Mapa turbin i portu
-        st.subheader("Mapa turbin i portu bazowego")
+        st.subheader("🗺️ Mapa turbin i portu bazowego")
         port_lat = 54.580
         port_lon = 16.860
 
@@ -340,7 +468,7 @@ with tab1:
         # Wybór turbiny już wykonany wyżej; odwołaj się do `selected_fault`
         info = df_map[df_map["fault_id"] == selected_fault].iloc[0]
 
-        st.subheader("Trasa port → turbina")
+        st.subheader("🧭 Trasa port → turbina")
         ref_vessel_speed = vessels[0].speed_kn if (vessels and len(vessels) > 0) else 20.0
         distance_km = haversine(port_lat, port_lon, info["lat"], info["lon"])
         transit_h = transit_time_km(distance_km, ref_vessel_speed)
@@ -388,7 +516,7 @@ with tab1:
         )
 
         # --- VESSEL ANIMATION ---
-        st.markdown("### Animacja ruchu statku")
+        st.markdown("### 🚢 Animacja ruchu statku")
         # Use modular animation renderer (handles start/stop and session_state internally)
         visual.render_animation(
             float(info["lat"]),
@@ -411,7 +539,7 @@ with tab1:
         st.markdown("---")
 
         # Gantt – harmonogram
-        st.subheader("Harmonogram napraw (Gantt)")
+        st.subheader("📅 Harmonogram napraw (Gantt)")
         df_gantt = df[df["start"].notna()].copy()
         if len(df_gantt) > 0:
             chart = (
@@ -443,13 +571,13 @@ with tab1:
         st.markdown("---")
 
         # Tabela harmonogramu
-        st.subheader("Tabela harmonogramu")
+        st.subheader("📋 Tabela harmonogramu")
         st.dataframe(df)
 
         st.markdown("---")
 
         # --- Solver optymalny (PuLP) vs. heurystyka ---
-        st.subheader("Porównanie z rozwiązaniem optymalnym")
+        st.subheader("⚖️ Porównanie z rozwiązaniem optymalnym")
         solver_disabled = len(faults) > SOLVER_MAX_FAULTS
         if solver_disabled:
             st.caption(
@@ -497,14 +625,22 @@ with tab1:
             )
 
             status_labels = {
-                "optimal": "optimum dowiedzione",
-                "time_limit": "najlepsze znalezione (limit czasu, optimum niedowiedzione)",
-                "infeasible": "brak rozwiązania",
-                "no_candidates": "brak wykonalnych kombinacji",
+                "optimal": ("✅ optimum dowiedzione", "teal"),
+                "time_limit": ("⏱️ najlepsze znalezione (limit czasu)", "amber"),
+                "infeasible": ("⛔ brak rozwiązania", "coral"),
+                "no_candidates": ("⛔ brak wykonalnych kombinacji", "coral"),
             }
-            st.caption(
-                f"Status solvera: {status_labels.get(meta['status'], meta['status'])} · "
-                f"czas: {meta['runtime_s']:.1f}s · kandydatów: {meta['num_candidates']}"
+            label, tone = status_labels.get(meta["status"], (meta["status"], "amber"))
+            st.markdown(
+                f"""
+                <div style="margin-top: 0.4rem;">
+                    <span class="om-badge om-badge-{tone}">{label}</span>
+                    <span style="color: #64748B; font-size: 0.85rem; margin-left: 0.6rem;">
+                        czas: {meta['runtime_s']:.1f}s · kandydatów: {meta['num_candidates']}
+                    </span>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
     else:
         st.info(
@@ -540,12 +676,21 @@ with tab2:
         f2 = gen_faults(n=roll_total_faults, seed=42, arrival_horizon_h=roll_horizon_days * 24)
         w2 = gen_windows(horizon_days=roll_horizon_days, seed=42)
         v2 = gen_vessels(count=roll_fleet_size)
-        with st.spinner("Symulacja wielodniowa w toku..."):
-            snapshots, df_committed = run_rolling_simulation(
-                f2, w2, v2, roll_horizon_days,
-                hs_thr=hs_thr, wind_thr=wind_thr,
-                workday_hours=(8 if workday_8h else 24),
+
+        roll_progress = st.progress(0.0, text=f"🌊 Dzień 0/{roll_horizon_days}...")
+
+        def _on_day_complete(day: int, total: int) -> None:
+            roll_progress.progress(
+                (day + 1) / total, text=f"🌊 Dzień {day + 1}/{total}..."
             )
+
+        snapshots, df_committed = run_rolling_simulation(
+            f2, w2, v2, roll_horizon_days,
+            hs_thr=hs_thr, wind_thr=wind_thr,
+            workday_hours=(8 if workday_8h else 24),
+            on_day_complete=_on_day_complete,
+        )
+        roll_progress.empty()
         st.session_state.rolling_data = (snapshots, df_committed)
         logger.info(
             "Rolling simulation run: horizon_days=%s total_faults=%s fleet_size=%s",
@@ -556,7 +701,7 @@ with tab2:
         snapshots, df_committed = st.session_state.rolling_data
         df_snap = snapshots_to_dataframe(snapshots)
 
-        st.subheader("KPI – Symulacja wielodniowa")
+        st.subheader("📊 KPI – Symulacja wielodniowa")
         k1, k2, k3 = st.columns(3)
         k1.metric("Rozwiązane naprawy", int(df_snap["resolved_today"].sum()))
         k2.metric("Backlog na koniec horyzontu", int(df_snap["backlog_after"].iloc[-1]))
@@ -564,7 +709,7 @@ with tab2:
 
         st.markdown("---")
 
-        st.subheader("Backlog w czasie")
+        st.subheader("📈 Backlog w czasie")
         st.altair_chart(
             alt.Chart(df_snap)
             .mark_line(point=True)
@@ -577,7 +722,7 @@ with tab2:
             width="stretch",
         )
 
-        st.subheader("Nowe vs. rozwiązane usterki per dzień")
+        st.subheader("📊 Nowe vs. rozwiązane usterki per dzień")
         long_df = df_snap.melt(
             id_vars="day",
             value_vars=["new_faults", "resolved_today"],
@@ -598,7 +743,7 @@ with tab2:
             width="stretch",
         )
 
-        st.subheader("Koszt skumulowany")
+        st.subheader("💰 Koszt skumulowany")
         st.altair_chart(
             alt.Chart(df_snap)
             .mark_line(point=True)
@@ -611,14 +756,14 @@ with tab2:
             width="stretch",
         )
 
-        st.subheader("Harmonogram zrealizowanych napraw (Gantt)")
+        st.subheader("📅 Harmonogram zrealizowanych napraw (Gantt)")
         chart = gantt_chart(df_committed)
         if chart is not None:
             st.altair_chart(chart, width="stretch")
         else:
             st.info("Brak zrealizowanych napraw dla zadanych parametrów.")
 
-        st.subheader("Dziennik symulacji")
+        st.subheader("🗒️ Dziennik symulacji")
         st.dataframe(df_snap)
     else:
         st.info(

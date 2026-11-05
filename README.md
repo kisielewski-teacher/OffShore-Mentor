@@ -1,6 +1,6 @@
 # Offshore Mentor
 
-**Interaktywny symulator logistyki serwisowania morskich farm wiatrowych offshore**
+Interaktywny symulator logistyki serwisowania morskich farm wiatrowych offshore
 
 Aplikacja odwzorowuje realne wyzwania operacyjne: planowanie napraw turbin z uwzględnieniem prognoz pogody, dostępności statków serwisowych (CTV), czasu tranzytu i kosztów operacji. Kontekst – polska energetyka wiatrowa na Bałtyku (cel 18+ GW do 2040 r.).
 
@@ -24,7 +24,7 @@ Aplikacja odwzorowuje realne wyzwania operacyjne: planowanie napraw turbin z uwz
 ## Wymagania
 
 | Pakiet | Rola |
-|--------|------|
+| --- | --- |
 | `streamlit` | Framework interfejsu webowego |
 | `pandas` | Przetwarzanie danych tabelarycznych |
 | `altair` | Wykresy (Gantt) |
@@ -79,7 +79,7 @@ python -m pytest -q
 Zakres testów (katalog `tests/`):
 
 | Plik | Zakres |
-|------|--------|
+| --- | --- |
 | `test_planner.py` | Jednostkowe testy algorytmu planowania (`planner/plan.py`): odległości, tranzyt, progi pogodowe, generatory danych, harmonogramowanie |
 | `test_simulation.py` | Symulacje Monte Carlo (wiele skal/nasion/progów) + fuzzing `hypothesis` sprawdzający niezmienniki harmonogramu (brak nakładania się rejsów statku, spójność kosztów, zgodność z oknami pogodowymi) |
 | `test_optimizer.py` | Solver optymalny (`planner/optimizer.py`): przypadki z policzalnym optimum, brak kandydatów, przewaga nad heurystyką, niezmienniki |
@@ -95,7 +95,7 @@ Zakres testów (katalog `tests/`):
 
 Jeśli korzystasz z wersji spakowanej (`dist/OffShoreMentor/`):
 
-```
+```powershell
 OffShoreMentor.exe
 ```
 
@@ -106,7 +106,7 @@ Instrukcja budowania pliku wykonywalnego: [packaging/README_BUILD.md](packaging/
 
 ## Struktura projektu
 
-```
+```text
 OffShore/
 ├── streamlit_app.py        # Punkt wejścia aplikacji
 ├── launcher.py             # Uruchamiacz dla wersji .exe (PyInstaller)
@@ -160,8 +160,8 @@ OffShore/
 Szczegółowa instrukcja obsługi (interfejs, algorytm planowania, pojęcia, rozwiązywanie problemów):
 [INSTRUKCJA.md](INSTRUKCJA.md)
 
-
-python -m streamlit run c:\Programy\OffShore\streamlit_app.py
+Historia zmian i numeracja wersji: [CHANGELOG.md](CHANGELOG.md)
+Licencja i informacje o bibliotekach zewnętrznych: [LICENSE.txt](LICENSE.txt), [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)
 
 ---
 

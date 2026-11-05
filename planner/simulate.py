@@ -12,7 +12,7 @@ złamałoby wymóg płynnego działania demo na żywo.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -45,6 +45,7 @@ def run_rolling_simulation(
     workday_hours: int = 8,
     port_lat: float = 54.580,
     port_lon: float = 16.860,
+    on_day_complete: Optional[Callable[[int, int], None]] = None,
 ) -> Tuple[List[DaySnapshot], pd.DataFrame]:
     """Uruchamia symulację dzień po dniu na przekazanym zbiorze usterek/okien.
 
@@ -53,6 +54,10 @@ def run_rolling_simulation(
     w całym horyzoncie, nie tylko w pierwszych 48h) oraz `windows`
     (`gen_windows(horizon_days, seed)`), tak jak dziś robi to wywołujący
     `plan_repairs`.
+
+    `on_day_complete`, gdy podany, jest wywoływany po zakończeniu każdego dnia
+    z argumentami `(day, horizon_days)` (dzień indeksowany od 0) - pozwala
+    wywołującemu (np. UI) pokazać pasek postępu bez zmiany logiki symulacji.
     """
     usage: Dict[str, List[int]] = {}
     backlog: List[Fault] = []
@@ -121,6 +126,9 @@ def run_rolling_simulation(
                 vessel_hours_today=vessel_hours_today,
             )
         )
+
+        if on_day_complete is not None:
+            on_day_complete(day, horizon_days)
 
     df = pd.DataFrame(committed_rows, columns=_SCHEDULE_COLUMNS)
     return snapshots, df

@@ -1,2 +1,13 @@
 [server]
 enableStaticServing = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#0D9488"
+backgroundColor = "#F7F9FC"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#1B2733"
+font = "sans serif"

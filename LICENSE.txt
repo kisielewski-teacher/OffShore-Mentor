@@ -1,0 +1,54 @@
+OFFSHORE MENTOR – LICENCJA WŁASNOŚCIOWA (PROPRIETARY LICENSE)
+Copyright (c) 2026 Autor(zy) projektu Offshore Mentor. Wszelkie prawa zastrzeżone.
+
+Niniejsze oprogramowanie ("Oprogramowanie") oraz towarzysząca mu dokumentacja
+stanowią własność intelektualną autora/autorów i są chronione prawem autorskim.
+
+1. UDZIELENIE LICENCJI
+   Po nabyciu licencji (zakupie) Licencjobiorca otrzymuje niewyłączne,
+   nieprzenoszalne prawo do instalowania i użytkowania Oprogramowania zgodnie
+   z warunkami określonymi w umowie/potwierdzeniu zakupu (np. liczba stanowisk,
+   okres licencji, zakres wsparcia).
+
+2. OGRANICZENIA
+   Bez pisemnej zgody właściciela praw Licencjobiorca nie może:
+   a) kopiować, rozpowszechniać ani udostępniać Oprogramowania osobom trzecim,
+   b) dekompilować, dezasemblować ani odtwarzać kodu źródłowego (reverse
+      engineering) poza zakresem dozwolonym bezwzględnie obowiązującymi
+      przepisami prawa,
+   c) modyfikować, tworzyć utworów zależnych ani usuwać informacji o prawach
+      autorskich,
+   d) sublicencjonować, wynajmować ani odsprzedawać Oprogramowania.
+
+3. WŁASNOŚĆ
+   Oprogramowanie jest licencjonowane, a nie sprzedawane. Wszelkie prawa,
+   tytuły i udziały w Oprogramowaniu, w tym prawa autorskie, pozostają
+   własnością autora/autorów.
+
+4. KOMPONENTY OSÓB TRZECICH
+   Oprogramowanie wykorzystuje biblioteki open-source wymienione w pliku
+   THIRD_PARTY_LICENSES.md, licencjonowane na warunkach ich odpowiednich
+   licencji (m.in. Apache-2.0, BSD-3-Clause, MIT, EPL-2.0). Warunki tych
+   licencji obowiązują niezależnie od niniejszej licencji.
+
+5. BRAK GWARANCJI
+   OPROGRAMOWANIE DOSTARCZANE JEST "TAK JAK JEST", BEZ JAKICHKOLWIEK GWARANCJI,
+   WYRAŹNYCH LUB DOROZUMIANYCH, W TYM MIĘDZY INNYMI GWARANCJI PRZYDATNOŚCI
+   HANDLOWEJ, PRZYDATNOŚCI DO OKREŚLONEGO CELU ORAZ NIENARUSZANIA PRAW.
+
+6. OGRANICZENIE ODPOWIEDZIALNOŚCI
+   W MAKSYMALNYM ZAKRESIE DOZWOLONYM PRZEZ PRAWO AUTOR NIE PONOSI
+   ODPOWIEDZIALNOŚCI ZA JAKIEKOLWIEK SZKODY POŚREDNIE, PRZYPADKOWE LUB WTÓRNE
+   WYNIKAJĄCE Z UŻYTKOWANIA LUB NIEMOŻNOŚCI UŻYTKOWANIA OPROGRAMOWANIA.
+
+7. WYPOWIEDZENIE
+   Licencja wygasa automatycznie w przypadku naruszenia jej warunków przez
+   Licencjobiorcę. Po wygaśnięciu Licencjobiorca zobowiązany jest zaprzestać
+   użytkowania i usunąć wszystkie kopie Oprogramowania.
+
+--
+UWAGA: To jest szablon licencji własnościowej przygotowany na potrzeby
+przygotowania projektu do sprzedaży. Przed faktyczną komercyjną dystrybucją
+zalecana jest konsultacja z prawnikiem w celu dostosowania treści (dane
+autora/firmy, jurysdykcja, warunki wsparcia i zwrotów) do obowiązujących
+przepisów oraz konkretnego modelu sprzedaży.

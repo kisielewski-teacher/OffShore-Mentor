@@ -84,6 +84,27 @@ def test_empty_horizon_inputs_return_schema_correct_empty_dataframe():
     assert df.empty
 
 
+def test_on_day_complete_callback_invoked_once_per_day_in_order():
+    horizon_days = 6
+    faults = gen_faults(n=20, seed=4, arrival_horizon_h=horizon_days * 24)
+    windows = gen_windows(horizon_days=horizon_days, seed=4)
+    vessels = gen_vessels()
+
+    calls = []
+    run_rolling_simulation(
+        faults, windows, vessels, horizon_days,
+        on_day_complete=lambda day, total: calls.append((day, total)),
+    )
+
+    assert calls == [(d, horizon_days) for d in range(horizon_days)]
+
+
+def test_on_day_complete_defaults_to_none_without_error():
+    # brak callbacku (domyślne None) musi zachowywać się identycznie jak dotychczas
+    (snapshots, df), _faults = _run(horizon_days=5)
+    assert len(snapshots) == 5
+
+
 def test_snapshots_to_dataframe_shape():
     (snapshots, _df), _faults = _run(horizon_days=5)
     df_snap = snapshots_to_dataframe(snapshots)

@@ -19,6 +19,3 @@ logs/
 
 # Generated assets (rebuilt automatically at runtime from assets/*.png)
 static/icons.png
-
-# Local-only manual backups (not project source)
-OffShore Backup/
