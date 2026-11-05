@@ -39,13 +39,22 @@ Python **3.10+**, Windows 10/11 / Linux / macOS.
 
 ## Szybki start
 
-### 1. Zainstaluj zależności
+### Najprościej (Windows): `uruchom.bat`
+
+Dwuklik na `uruchom.bat` sprawdza Pythona 3.10+, tworzy `.venv`, kontroluje pliki
+projektu, wersje pakietów z `requirements.txt` i solver CBC, w razie braków
+doinstalowuje pakiety, a potem uruchamia aplikację (na wolnym porcie od 8501).
+Warianty: `uruchom.bat sprawdz` (tylko kontrola) i `uruchom.bat test` (ruff + pytest).
+
+### Ręcznie
+
+#### 1. Zainstaluj zależności
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-### 2. Uruchom aplikację
+#### 2. Uruchom aplikację
 
 ```powershell
 python -m streamlit run streamlit_app.py
@@ -55,7 +64,7 @@ Przeglądarka otworzy się automatycznie pod adresem `http://localhost:8501`.
 
 > **Windows:** jeśli `streamlit` nie jest rozpoznawany, używaj zawsze `python -m streamlit run ...`
 
-### Wirtualne środowisko (zalecane)
+#### Wirtualne środowisko (zalecane)
 
 ```powershell
 python -m venv .venv
