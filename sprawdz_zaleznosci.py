@@ -5,7 +5,7 @@ zaleznosci Pythona lub solver CBC (bat sprobuje doinstalowac pakiety),
 2 = problem, ktorego instalacja nie naprawi (brak plikow projektu, zly Python,
 blad importu, katalog niezapisywalny).
 
-Uzycie: python sprawdz_zaleznosci.py
+Uzycie: python sprawdz_zaleznosci.py [--wolny-port OD DO]  (wypisuje pierwszy wolny port)
 """
 
 from __future__ import annotations
@@ -119,7 +119,38 @@ def sprawdz_zapis() -> list[str]:
     return problemy
 
 
+def port_wolny(port: int) -> bool:
+    """Prawdziwa proba zajecia portu (IPv4 i IPv6), tak jak robi to Streamlit.
+
+    Parsowanie `netstat` nie wystarcza: porty trzymane przez konczace sie procesy
+    (stan FIN_WAIT/CLOSED) nie sa LISTENING, a mimo to nie da sie ich zajac.
+    """
+    import socket
+
+    adresy = [(socket.AF_INET, "0.0.0.0")]
+    if socket.has_ipv6:
+        adresy.append((socket.AF_INET6, "::"))
+    for rodzina, adres in adresy:
+        try:
+            with socket.socket(rodzina, socket.SOCK_STREAM) as s:
+                s.bind((adres, port))
+        except OSError:
+            return False
+    return True
+
+
+def znajdz_wolny_port(od: int, do: int) -> int | None:
+    return next((p for p in range(od, do + 1) if port_wolny(p)), None)
+
+
 def main() -> int:
+    if len(sys.argv) == 4 and sys.argv[1] == "--wolny-port":
+        port = znajdz_wolny_port(int(sys.argv[2]), int(sys.argv[3]))
+        if port is None:
+            return 2
+        print(port)
+        return 0
+
     twarde: list[str] = []  # nienaprawialne instalacja
     miekkie: list[str] = []  # naprawialne przez pip install
 

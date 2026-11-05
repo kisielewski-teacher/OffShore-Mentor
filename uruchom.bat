@@ -116,18 +116,15 @@ if /i "%TRYB%"=="test" (
 
 rem --- 5. Start aplikacji ------------------------------------------------------
 echo [5/5] Uruchamiam aplikacje ...
-rem Port 8501 bywa zajety przez inne aplikacje Streamlit - wybieramy pierwszy wolny.
+rem Port 8501 bywa zajety przez inne aplikacje Streamlit - wybieramy pierwszy wolny
+rem (prawdziwa proba zajecia portu, a nie czytanie netstat).
 set "PORT_START=%PORT%"
-:szukaj_portu
-netstat -ano | findstr /r /c:":%PORT% .*LISTENING" >nul 2>&1
-if errorlevel 1 goto :port_wolny
-set /a PORT+=1
-if %PORT% GTR 8520 goto :brak_portu
-goto :szukaj_portu
-:brak_portu
-echo BLAD: porty %PORT_START%-8520 sa zajete. Zamknij inne aplikacje Streamlit.
-goto :koniec_blad
-:port_wolny
+set "PORT="
+for /f %%P in ('"%VENV_PY%" sprawdz_zaleznosci.py --wolny-port %PORT_START% 8520') do set "PORT=%%P"
+if not defined PORT (
+    echo BLAD: porty %PORT_START%-8520 sa zajete. Zamknij inne aplikacje Streamlit.
+    goto :koniec_blad
+)
 if not "%PORT%"=="%PORT_START%" echo       port %PORT_START% jest zajety przez inny program - uzywam %PORT%
 echo.
 echo Aplikacja wystartuje pod adresem http://localhost:%PORT%
