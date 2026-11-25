@@ -34,9 +34,10 @@ echo [1/5] Szukam Pythona 3.10+ ...
 call :znajdz_pythona
 if not defined PY_START (
     echo.
-    echo BLAD: nie znaleziono Pythona 3.10 lub nowszego.
-    echo Pobierz go z https://www.python.org/downloads/ i przy instalacji zaznacz
-    echo "Add python.exe to PATH", a potem uruchom ten plik ponownie.
+    echo BLAD: nie znaleziono 64-bitowego Pythona w wersji 3.10 - 3.14.
+    echo Zalecany jest Python 3.12 64-bit: https://www.python.org/downloads/windows/
+    echo Przy instalacji zaznacz "Add python.exe to PATH", a potem uruchom ten plik ponownie.
+    echo ^(Za nowy Python, np. 3.15, lub wersja 32-bitowa nie maja gotowych pakietow.^)
     goto :koniec_blad
 )
 echo       znaleziono: %PY_START%
@@ -44,7 +45,7 @@ echo       znaleziono: %PY_START%
 rem --- 2. Wirtualne srodowisko -------------------------------------------------
 echo [2/5] Wirtualne srodowisko .venv ...
 if exist "%VENV_PY%" (
-    "%VENV_PY%" -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)" >nul 2>&1
+    "%VENV_PY%" -c "import sys; sys.exit(0 if (3, 10) <= sys.version_info[:2] <= (3, 14) and sys.maxsize > 2**32 else 1)" >nul 2>&1
     if errorlevel 1 (
         echo       .venv jest uszkodzone lub ma za stary Python - tworze od nowa
         rmdir /s /q ".venv"
@@ -73,10 +74,12 @@ if "%WYNIK%"=="2" (
 rem --- 4. Doinstalowanie brakujacych pakietow ---------------------------------
 if "%WYNIK%"=="1" (
     echo [4/5] Instaluje brakujace pakiety z requirements.txt ^(wymaga internetu^) ...
-    "%VENV_PY%" -m pip install --disable-pip-version-check -r requirements.txt
+    "%VENV_PY%" -m pip install --disable-pip-version-check --only-binary :all: -r requirements.txt
     if errorlevel 1 (
         echo.
-        echo BLAD: instalacja pakietow nie powiodla sie. Sprawdz polaczenie z internetem.
+        echo BLAD: instalacja pakietow nie powiodla sie. Sprawdz internet oraz to, czy
+        echo masz 64-bitowego Pythona 3.10 - 3.14 ^(zalecany 3.12^). Wersja uzyta tutaj:
+        "%VENV_PY%" -c "import sys,platform; print(sys.version); print(platform.architecture()[0])"
         goto :koniec_blad
     )
     echo       ponowna kontrola ...
@@ -140,8 +143,9 @@ goto :koniec_ok
 
 rem ============================================================================
 :znajdz_pythona
-for %%C in ("py -3" "python") do (
-    %%~C -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)" >nul 2>&1
+rem Szukamy 64-bitowego Pythona 3.10-3.14 (dla nowszych/32-bitowych brak gotowych pakietow).
+for %%C in ("py -3.12" "py -3.13" "py -3.11" "py -3.14" "py -3.10" "py -3" "python") do (
+    %%~C -c "import sys; sys.exit(0 if (3, 10) <= sys.version_info[:2] <= (3, 14) and sys.maxsize > 2**32 else 1)" >nul 2>&1
     if not errorlevel 1 (
         set "PY_START=%%~C"
         goto :eof

@@ -30,3 +30,4 @@ Ostatnia aktualizacja: 2026-09-27 (wersja release bez okna konsoli + logowanie/d
 
 - [ ] Repozytorium `kisielewski-teacher/OffShore-Mentor` jest **prywatne** — link z `instaluj.bat` zadziała u odbiorców dopiero po zmianie na publiczne (albo użyć wydania/hostingu pliku ZIP). Przed upublicznieniem sprawdzić, czy w historii nie ma danych poufnych.
 - [ ] `instaluj.bat` pobiera gałąź `master`; po ustabilizowaniu przejść na tagowane wydania (GitHub Releases), żeby odbiorcy nie dostawali niedokończonych zmian.
+- [ ] Przetestować `uruchom.bat` na komputerach uczniów z różnymi wersjami Pythona (3.10–3.14, 32-bit, Microsoft Store); gdy `requirements.txt` zostanie zaktualizowany, sprawdzić, czy nowe wersje mają gotowe pakiety (wheels) dla wszystkich obsługiwanych wersji Pythona.
