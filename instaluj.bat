@@ -40,7 +40,7 @@ if not exist "%SRC%\uruchom.bat" (
 )
 robocopy "%SRC%" "%DOCEL%" /E /XD .venv logs static /NFL /NDL /NJH /NJS /NP >nul
 if errorlevel 8 goto :blad
-if not exist "%DOCEL%\static" robocopy "%SRC%\static" "%DOCEL%\static" /E /NFL /NDL /NJH /NJS /NP >nul
+if exist "%SRC%\static" if not exist "%DOCEL%\static" robocopy "%SRC%\static" "%DOCEL%\static" /E /NFL /NDL /NJH /NJS /NP >nul
 rmdir /s /q "%TMP_DIR%"
 
 echo [3/3] Uruchamianie (instalacja zaleznosci przy pierwszym starcie) ...
