@@ -58,6 +58,10 @@ if not exist "%VENV_PY%" (
         echo BLAD: nie udalo sie utworzyc wirtualnego srodowiska.
         goto :koniec_blad
     )
+    if not exist "%VENV_PY%" (
+        echo BLAD: nie udalo sie utworzyc wirtualnego srodowiska.
+        goto :koniec_blad
+    )
 )
 echo       OK
 
@@ -145,10 +149,12 @@ rem ============================================================================
 :znajdz_pythona
 rem Szukamy 64-bitowego Pythona 3.10-3.14 (dla nowszych/32-bitowych brak gotowych pakietow).
 for %%C in ("py -3.12" "py -3.13" "py -3.11" "py -3.14" "py -3.10" "py -3" "python") do (
-    %%~C -c "import sys; sys.exit(0 if (3, 10) <= sys.version_info[:2] <= (3, 14) and sys.maxsize > 2**32 else 1)" >nul 2>&1
-    if not errorlevel 1 (
-        set "PY_START=%%~C"
-        goto :eof
+    rem Nowy menedzer "py" zwraca kod 0 nawet gdy wersji nie ma - dlatego sprawdzamy wypisane "OK".
+    for /f "usebackq delims=" %%R in (`%%~C -c "import sys; print('OK' if (3, 10) <= sys.version_info[:2] <= (3, 14) and sys.maxsize > 2**32 else 'NO')" 2^>nul`) do (
+        if "%%R"=="OK" (
+            set "PY_START=%%~C"
+            goto :eof
+        )
     )
 )
 goto :eof
