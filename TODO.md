@@ -25,3 +25,8 @@ Ostatnia aktualizacja: 2026-09-27 (wersja release bez okna konsoli + logowanie/d
 
 - [ ] Przygotować krótki opis produktu / landing page / cennik (obecny `README.md` i `INSTRUKCJA.md` są dokumentacją techniczną, nie materiałem marketingowym).
 - [ ] Przygotować zrzuty ekranu / demo wideo aplikacji do materiałów sprzedażowych.
+
+## Do zrobienia — instalator / dystrybucja
+
+- [ ] Repozytorium `kisielewski-teacher/OffShore-Mentor` jest **prywatne** — link z `instaluj.bat` zadziała u odbiorców dopiero po zmianie na publiczne (albo użyć wydania/hostingu pliku ZIP). Przed upublicznieniem sprawdzić, czy w historii nie ma danych poufnych.
+- [ ] `instaluj.bat` pobiera gałąź `master`; po ustabilizowaniu przejść na tagowane wydania (GitHub Releases), żeby odbiorcy nie dostawali niedokończonych zmian.
