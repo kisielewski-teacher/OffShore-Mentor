@@ -33,9 +33,14 @@ rem --- 1. Python 3.10+ --------------------------------------------------------
 echo [1/5] Szukam Pythona 3.10+ ...
 call :znajdz_pythona
 if not defined PY_START (
+    call :instaluj_pythona
+    call :znajdz_pythona
+)
+if not defined PY_START (
     echo.
-    echo BLAD: nie znaleziono 64-bitowego Pythona w wersji 3.10 - 3.14.
-    echo Zalecany jest Python 3.12 64-bit: https://www.python.org/downloads/windows/
+    echo BLAD: nie znaleziono 64-bitowego Pythona w wersji 3.10 - 3.14 i nie udalo sie
+    echo zainstalowac go automatycznie. Zainstaluj recznie Python 3.12 64-bit:
+    echo https://www.python.org/downloads/windows/
     echo Przy instalacji zaznacz "Add python.exe to PATH", a potem uruchom ten plik ponownie.
     echo ^(Za nowy Python, np. 3.15, lub wersja 32-bitowa nie maja gotowych pakietow.^)
     goto :koniec_blad
@@ -157,6 +162,20 @@ for %%C in ("py -3.12" "py -3.13" "py -3.11" "py -3.14" "py -3.10" "py -3" "pyth
         )
     )
 )
+goto :eof
+
+:instaluj_pythona
+rem Automatyczna instalacja Pythona 3.12 (tylko dla biezacego uzytkownika, bez uprawnien administratora).
+echo       brak pasujacego Pythona - pobieram i instaluje Python 3.12 ^(kilka minut^) ...
+set "PY_EXE=%TEMP%\python-3.12.10-amd64.exe"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe' -OutFile '%PY_EXE%'; $s=Get-AuthenticodeSignature '%PY_EXE%'; if ($s.Status -ne 'Valid' -or $s.SignerCertificate.Subject -notmatch 'Python Software Foundation') { Remove-Item '%PY_EXE%' -Force; exit 1 }"
+if errorlevel 1 (
+    echo       nie udalo sie pobrac lub zweryfikowac instalatora Pythona.
+    goto :eof
+)
+start /wait "" "%PY_EXE%" /quiet InstallAllUsers=0 PrependPath=1 Include_launcher=0 Include_test=0 Include_doc=0 Shortcuts=0
+del "%PY_EXE%" >nul 2>&1
+set "PATH=%LOCALAPPDATA%\Programs\Python\Python312;%LOCALAPPDATA%\Programs\Python\Python312\Scripts;%PATH%"
 goto :eof
 
 :koniec_blad
