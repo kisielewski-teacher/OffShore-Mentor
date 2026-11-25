@@ -43,6 +43,10 @@ if errorlevel 8 goto :blad
 if exist "%SRC%\static" if not exist "%DOCEL%\static" robocopy "%SRC%\static" "%DOCEL%\static" /E /NFL /NDL /NJH /NJS /NP >nul
 rmdir /s /q "%TMP_DIR%"
 
+echo       tworze skrot na pulpicie ...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$d=[Environment]::GetFolderPath('Desktop'); $s=(New-Object -ComObject WScript.Shell).CreateShortcut($d+'\OffShore Mentor.lnk'); $s.TargetPath='%DOCEL%\uruchom.bat'; $s.WorkingDirectory='%DOCEL%'; $s.IconLocation='%DOCEL%\assets\icon.ico'; $s.Save()"
+if errorlevel 1 echo       (nie udalo sie utworzyc skrotu - uruchamiaj uruchom.bat z folderu instalacji)
+
 echo [3/3] Uruchamianie (instalacja zaleznosci przy pierwszym starcie) ...
 call "%DOCEL%\uruchom.bat"
 exit /b %errorlevel%
